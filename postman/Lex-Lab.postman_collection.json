@@ -1,0 +1,51 @@
+{
+  "info": {
+    "name": "Lex Lab (Node + Lex Runtime V2)",
+    "_postman_id": "c8b2d3d3-lex-lab-0000-0000-000000000000",
+    "description": "POST /chat → Node.js가 Lex Runtime V2 RecognizeText 호출",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/health",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Chat",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"강남점 토익 예약하고 싶어요\",\n  \"sessionId\": \"demo-user-001\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/chat",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "chat"
+          ]
+        }
+      }
+    }
+  ]
+}

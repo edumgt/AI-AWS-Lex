@@ -1,0 +1,13 @@
+{
+  "name": "lex-lab-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-lex-runtime-v2": "^3.600.0",
+    "express": "^4.19.2"
+  }
+}

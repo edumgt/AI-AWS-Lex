@@ -1,0 +1,12 @@
+{
+  "name": "lex-lab-infra",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "private": true,
+  "dependencies": {
+    "@aws-sdk/client-iam": "^3.600.0",
+    "@aws-sdk/client-lex-models-v2": "^3.600.0",
+    "@aws-sdk/client-sts": "^3.600.0",
+    "dotenv": "^16.4.5"
+  }
+}
