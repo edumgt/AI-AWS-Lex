@@ -1,5 +1,7 @@
 # Amazon Lex V2 + Node.js 실습 패키지 (학원 예약/상담 도메인)
 
+![alt text](image.png)
+
 이 레포는 **Amazon Lex V2 챗봇**을 구축하고, **Lambda Fulfillment(Node.js)** 및 **Express API 서버**를 통해
 **Lex Runtime V2(RecognizeText)** 를 호출하는 전체 흐름을 실습하도록 구성되어 있습니다.
 
@@ -131,8 +133,8 @@ npm i
 
 ```bash
 export AWS_REGION=ap-northeast-2
-export LEX_BOT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
-export LEX_BOT_ALIAS_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
+export LEX_BOT_ID=
+export LEX_BOT_ALIAS_ID=
 export LEX_LOCALE_ID=ko_KR
 ```
 

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Lex Chat UX</title>
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="title">Lex Chat UX</div>
+      <div class="meta">
+        <span id="sessionLabel"></span>
+        <button id="newSessionBtn" class="btn ghost" title="새 세션">New</button>
+      </div>
+    </header>
+
+    <section class="summaryWrap">
+      <div class="summaryHead">
+        <div class="summaryTitle">현재 입력 요약</div>
+        <div id="summaryHint" class="summaryHint">세션별로 자동 저장됩니다.</div>
+      </div>
+      <div id="summary" class="summary"></div>
+    </section>
+
+    <main id="chat" class="chat"></main>
+
+    <div id="chips" class="chips"></div>
+
+    <footer class="composer">
+      <input id="input" class="input" placeholder="메시지를 입력하세요..." autocomplete="off"/>
+      <button id="sendBtn" class="btn primary">Send</button>
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
