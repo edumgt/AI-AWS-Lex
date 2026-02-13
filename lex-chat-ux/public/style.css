@@ -38,6 +38,16 @@ body{
 .meta{display:flex; gap:10px; align-items:center}
 #sessionLabel{color:var(--muted); font-size:12px}
 
+.engineLabel{font-size:12px;color:var(--muted)}
+.engineSelect{
+  border:1px solid var(--border);
+  background:#0f141c;
+  color:var(--text);
+  border-radius:10px;
+  padding:6px 8px;
+  font-size:12px;
+}
+
 .chat{
   flex:1;
   padding:18px 16px 10px;

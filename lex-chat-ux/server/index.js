@@ -7,6 +7,7 @@ require("dotenv").config();
 const { recognizeText } = require("./lexClient");
 const { formatLexResponse } = require("./lexFormatter");
 const { getSuggestions } = require("./suggestions");
+const { chatWithOnPremEngine, getEnabledEngines } = require("./onpremClient");
 
 const app = express();
 app.use(express.json({ limit: "256kb" }));
@@ -16,6 +17,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
+
+app.get("/api/engines", (req, res) => {
+  res.json({
+    defaultEngine: process.env.DEFAULT_AI_ENGINE || "aws-lex",
+    engines: getEnabledEngines()
+  });
+});
 
 app.get("/api/suggestions", async (req, res) => {
   try {
@@ -33,12 +41,19 @@ app.get("/api/suggestions", async (req, res) => {
 app.post("/api/chat", async (req, res) => {
   try {
     const text = (req.body?.text || "").toString().trim();
+    const engine = (req.body?.engine || process.env.DEFAULT_AI_ENGINE || "aws-lex").toString().trim();
     if (!text) return res.status(400).json({ error: "text is required" });
 
     // sessionId: body 우선 -> cookie -> 생성
     const provided = (req.body?.sessionId || "").toString().trim();
     const cookieSid = (req.cookies?.lex_session_id || "").toString().trim();
     const sessionId = provided || cookieSid || `web-${nanoid(10)}`;
+
+    if (engine !== "aws-lex") {
+      const out = await chatWithOnPremEngine({ text, sessionId, engine });
+      res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
+      return res.json(out);
+    }
 
     const raw = await recognizeText({ text, sessionId });
     const out = formatLexResponse({ raw, sessionId });
@@ -53,7 +68,7 @@ app.post("/api/chat", async (req, res) => {
     // cookie에 세션 저장(웹 UX 편의)
     res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
 
-    res.json(out);
+    res.json({ ...out, engine });
   } catch (err) {
     res.status(500).json({
       error: err?.message || String(err),

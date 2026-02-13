@@ -6,6 +6,7 @@
   const $sessionLabel = document.getElementById("sessionLabel");
   const $newSession = document.getElementById("newSessionBtn");
   const $summary = document.getElementById("summary");
+  const $engineSelect = document.getElementById("engineSelect");
 
   const LS_KEY = "lex_chat_ux_v2_state";
 
@@ -40,6 +41,14 @@
   }
   function setLastSummary(summary) {
     saveState({ summary });
+  }
+
+  function getSelectedEngine() {
+    return loadState().engine || "aws-lex";
+  }
+  function setSelectedEngine(engine) {
+    saveState({ engine });
+    if ($engineSelect) $engineSelect.value = engine;
   }
 
   function newSession() {
@@ -120,7 +129,6 @@
   function renderSummary(summaryItems) {
     $summary.innerHTML = "";
     const items = (summaryItems && summaryItems.length) ? summaryItems : [];
-    // always show common keys even if empty, for UX
     const defaultKeys = ["지점","과정","날짜","시간","이름","연락처","예약번호"];
     const normalized = items.length ? items : defaultKeys.map(l => ({ label: l, value: null }));
 
@@ -145,13 +153,11 @@
     const mode = ui?.mode || "message";
     const slot = ui?.slotToElicit || "";
 
-    // reset
     $input.type = "text";
     $input.inputMode = "text";
     $input.placeholder = ui?.placeholder || "메시지를 입력하세요...";
     $input.maxLength = 200;
 
-    // slot-specific UX
     if (mode === "elicit_slot") {
       if (slot === "PhoneNumber") {
         $input.type = "tel";
@@ -163,7 +169,6 @@
         $input.inputMode = "numeric";
         $input.placeholder = ui?.placeholder || "19:30";
       } else if (slot === "Date") {
-        // 브라우저가 date를 지원하면 native picker 느낌
         $input.type = "date";
         $input.inputMode = "numeric";
         $input.placeholder = ui?.placeholder || "2026-02-10";
@@ -176,7 +181,6 @@
     }
   }
 
-  // phone mask: 01012345678 -> 010-1234-5678
   function formatPhone(value) {
     const digits = (value || "").replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 3) return digits;
@@ -184,9 +188,7 @@
     return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
   }
 
-  // attach input handler (dynamic)
   $input.addEventListener("input", () => {
-    // Only mask when it looks like tel input
     if ($input.type === "tel") {
       const before = $input.value;
       const after = formatPhone(before);
@@ -196,12 +198,13 @@
 
   async function send(text) {
     const sessionId = getSessionId();
+    const engine = getSelectedEngine();
     const typingRow = showTyping();
 
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, sessionId })
+      body: JSON.stringify({ text, sessionId, engine })
     }).then(r => r.json());
 
     typingRow.remove();
@@ -213,18 +216,15 @@
 
     if (!sessionId && res.sessionId) setSessionId(res.sessionId);
 
-    // 요약 저장/렌더
     if (Array.isArray(res.summary)) {
       setLastSummary(res.summary);
       renderSummary(res.summary);
     }
 
-    // 메시지 출력
     const msgs = (res.messages && res.messages.length) ? res.messages : [res.ui?.prompt].filter(Boolean);
-    const meta = res.intent ? `${res.intent} · ${res.state || ""}` : "";
+    const meta = [res.engine || engine, res.intent, res.state].filter(Boolean).join(" · ");
     msgs.forEach(m => addBot(m, meta));
 
-    // Chips/입력 UX 업데이트
     setInputUx(res.ui);
 
     if (res.ui?.mode === "elicit_slot") {
@@ -245,10 +245,30 @@
     send(text).catch(err => addBot(`에러: ${err.message || err}`));
   }
 
+  async function loadEngines() {
+    try {
+      const data = await fetch("/api/engines").then(r => r.json());
+      const engines = Array.isArray(data.engines) ? data.engines : [];
+      const preferred = getSelectedEngine() || data.defaultEngine || "aws-lex";
+
+      $engineSelect.innerHTML = "";
+      engines.forEach((e) => {
+        const opt = document.createElement("option");
+        opt.value = e.key;
+        opt.textContent = e.label;
+        $engineSelect.appendChild(opt);
+      });
+
+      const selectable = engines.some(e => e.key === preferred) ? preferred : (data.defaultEngine || "aws-lex");
+      setSelectedEngine(selectable);
+    } catch (_) {
+      $engineSelect.innerHTML = '<option value="aws-lex">AWS Lex (Managed)</option>';
+      setSelectedEngine("aws-lex");
+    }
+  }
+
   function restore() {
-    // session
     setSessionId(getSessionId());
-    // history
     const history = getHistory();
     if (history.length) {
       $chat.innerHTML = "";
@@ -256,13 +276,15 @@
     } else {
       addBot("안녕하세요! Lex와 연결된 데모 채팅입니다. 예) “강남점 토익 예약하고 싶어요”");
     }
-    // summary
     renderSummary(getLastSummary());
   }
 
-  // init
   restore();
+  loadEngines();
 
+  $engineSelect.addEventListener("change", (e) => {
+    setSelectedEngine((e.target.value || "aws-lex").trim());
+  });
   $send.addEventListener("click", onSend);
   $input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") onSend();
