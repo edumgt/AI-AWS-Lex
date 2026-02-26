@@ -41,7 +41,8 @@
 ├─ infra/
 │  ├─ README.md                   # Lex 자동 생성 스크립트 사용법
 │  ├─ config.example.env          # 자동 생성용 환경 변수 템플릿
-│  ├─ lex-bootstrap.sh            # AWS CLI 기반 자동 생성 스크립트
+│  ├─ lex-bootstrap.sh            # AWS CLI 기반 자동 생성 스크립트(bash)
+│  ├─ lex-bootstrap.py            # AWS CLI 기반 자동 생성 스크립트(Python)
 │  └─ lex-bootstrap.js            # AWS SDK 기반 자동 생성 스크립트
 ├─ scripts/
 │  └─ seed-testcases.json         # 테스트 발화/기대 인텐트 시드
@@ -171,7 +172,8 @@ curl -s http://localhost:3000/chat \
 
 - `infra/config.example.env`를 `infra/config.env`로 복사 후 값 설정
 - 아래 중 하나 실행
-  - `bash infra/lex-bootstrap.sh` (AWS CLI)
+  - `python3 infra/lex-bootstrap.py` (AWS CLI, Python / 권장)
+  - `bash infra/lex-bootstrap.sh` (AWS CLI, bash)
   - `node infra/lex-bootstrap.js` (AWS SDK)
 - 생성 결과로 `BOT_ID`, `BOT_ALIAS_ID`를 받아 서버 환경변수에 반영
 

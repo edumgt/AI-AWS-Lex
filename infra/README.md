@@ -2,7 +2,8 @@
 
 이 폴더에는 **Lex V2 봇을 자동 생성**하는 스크립트가 2가지 들어있습니다.
 
-- `lex-bootstrap.sh` : AWS CLI 기반 (권장: 가장 단순/확실)
+- `lex-bootstrap.sh` : AWS CLI 기반 bash 스크립트
+- `lex-bootstrap.py` : AWS CLI 기반 Python 스크립트 (권장)
 - `lex-bootstrap.js` : Node.js(AWS SDK v3) 기반
 
 ---
@@ -21,7 +22,19 @@
 
 ---
 
-## 방법 A: AWS CLI (bash)
+## 방법 A: AWS CLI (Python, 권장)
+### 1) 의존성
+- aws cli
+- python 3.9+
+
+### 2) 실행
+```bash
+python3 infra/lex-bootstrap.py
+```
+
+---
+
+## 방법 B: AWS CLI (bash)
 ### 1) 의존성
 - aws cli
 - jq
@@ -114,7 +127,7 @@ export LEX_LOCALE_ID=ko_KR
 
 ---
 
-## 방법 B: Node.js (AWS SDK v3) - js 로 만드는 예시로 미완성본
+## 방법 C: Node.js (AWS SDK v3) - js 로 만드는 예시로 미완성본
 ### 1) 의존성 설치
 ```bash
 cd infra
