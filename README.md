@@ -236,8 +236,6 @@ Lex Alias에 Fulfillment 코드훅으로 연결합니다.
 - Alias 기반(DEV/PROD) 배포 전략을 사용하면 안정적인 변경 반영이 가능합니다.
 - Lambda/Express 로그를 CloudWatch 및 콘솔 로그로 함께 추적하면 문제 분석이 쉽습니다.
 
----
+### AWS Infra Architecture
 
-## 라이선스
-
-학습/실습 목적 자유롭게 사용 가능합니다.
+![](./sample.png)
