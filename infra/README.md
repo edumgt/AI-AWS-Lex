@@ -32,11 +32,13 @@ bash infra/lex-bootstrap.sh
 ```
 
 ---
+
+![alt text](image.png)
+---
 ### BotID 는 있으나 오류일 경우
 ```
 AWS_REGION=ap-northeast-2
-BOT_ID=OFNMS2HLFJ
-
+BOT_ID=WEZTIGWZXD
 while true; do
   s=$(aws --region $AWS_REGION lexv2-models describe-bot --bot-id "$BOT_ID" --query botStatus --output text)
   echo "botStatus=$s"
@@ -46,20 +48,15 @@ while true; do
 done
 ```
 ### 위의 작업으로 botStatus=Available 상태 확인 후 다시 진행
-
 ---
 ```
-export BOT_ID=OFNMS2HLFJ
+export BOT_ID=WEZTIGWZXD
 bash infra/lex-bootstrap.sh
 ```
-
-
 ### 수정 후 문법 체크
 ```
 bash -n infra/lex-bootstrap.sh && echo "OK: syntax" || echo "NG"
 ```
-
-
 ### Locale 문제 발생 시
 ```
 # WARNING: DRAFT Locale 삭제 -> 그 안의 intent/slot/slotType 전부 날아감
@@ -74,7 +71,6 @@ bash infra/lex-bootstrap.sh
 ```
 root@DESKTOP-D6A344Q:/home/AI-AWS-Lex# BOT_ID=OFNMS2HLFJ
 REGION=ap-northeast-2
-
 while true; do
   S=$(aws --region $REGION lexv2-models describe-bot --bot-id $BOT_ID --query botStatus --output text)
   echo "botStatus=$S"
