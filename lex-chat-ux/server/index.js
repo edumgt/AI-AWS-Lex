@@ -4,7 +4,10 @@ const cookieParser = require("cookie-parser");
 const { nanoid } = require("nanoid");
 require("dotenv").config();
 
-const { recognizeText } = require("./lexClient");
+// const { recognizeText } = require("./lexClient");
+
+const { invokeReservationFulfillment } = require("./lambdaClient");
+
 const { formatLexResponse } = require("./lexFormatter");
 const { getSuggestions } = require("./suggestions");
 const { chatWithOnPremEngine, getEnabledEngines } = require("./onpremClient");
@@ -55,9 +58,11 @@ app.post("/api/chat", async (req, res) => {
       return res.json(out);
     }
 
-    const raw = await recognizeText({ text, sessionId });
-    const out = formatLexResponse({ raw, sessionId });
+    // const raw = await recognizeText({ text, sessionId });
+    // const out = formatLexResponse({ raw, sessionId });
 
+    const out = await invokeReservationFulfillment({ text, sessionId });
+    
     // Quick replies 자동 주입: ElicitSlot일 때
     if (out?.ui?.mode === "elicit_slot" && out.ui.slotToElicit) {
       const slot = out.ui.slotToElicit;

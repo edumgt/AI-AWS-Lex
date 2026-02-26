@@ -182,13 +182,14 @@ aws --region ap-northeast-2 lambda list-functions \
 REGION=ap-northeast-2
 FUNC_NAME=LexReservationFulfillment
 ROLE_NAME=LexLambdaExecRole
-
-
 rm -rf /tmp/lexlambda && mkdir -p /tmp/lexlambda
 cp /home/AI-AWS-Lex/lambda/fulfillment.js /tmp/lexlambda/index.js
 cd /tmp/lexlambda && zip -qr /tmp/lexlambda.zip .
+```
+---
 
 # 4) Lambda 함수 생성(이미 있으면 업데이트)
+```
 aws --region $REGION lambda get-function --function-name $FUNC_NAME >/dev/null 2>&1 && \
 aws --region $REGION lambda update-function-code --function-name $FUNC_NAME --zip-file fileb:///tmp/lexlambda.zip >/dev/null || \
 aws --region $REGION lambda create-function \
@@ -206,7 +207,7 @@ echo "LAMBDA_ARN=$LAMBDA_ARN"
 ```
 REGION=ap-northeast-2
 BOT_ID=OFNMS2HLFJ
-ALIAS_NAME=DEV
+ALIAS_NAME=Prod
 LOCALE_ID=ko_KR
 LAMBDA_ARN="arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment"
 
@@ -246,7 +247,7 @@ ACCOUNT_ID=086015456585
 BOT_ID=OFNMS2HLFJ
 ALIAS_ID=$(aws --region $REGION lexv2-models list-bot-aliases \
   --bot-id "$BOT_ID" \
-  --query "botAliasSummaries[?botAliasName=='DEV'].botAliasId | [0]" --output text)
+  --query "botAliasSummaries[?botAliasName=='Prod'].botAliasId | [0]" --output text)
 
 LAMBDA_ARN="arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment"
 
@@ -279,29 +280,19 @@ Available
 # 테스트:
 
 ```bash
-curl -s http://localhost:3000/chat -H 'Content-Type: application/json' \
+curl -s http://localhost:3000/api/chat \
+  -H 'Content-Type: application/json' \
   -d '{"text":"강남점 토익 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
 ```
-```
-curl -s http://localhost:3000/chat -H 'Content-Type: application/json' \
-  -d '{"text":"강남점","sessionId":"demo-user-001"}' | jq .
-```
-```
-curl -s http://localhost:3000/chat -H 'Content-Type: application/json' \
-  -d '{"text":"토익","sessionId":"demo-user-001"}' | jq .
-```
-```
-curl -s http://localhost:3000/chat -H 'Content-Type: application/json' \
-  -d '{"text":"2월 10일","sessionId":"demo-user-001"}' | jq .
 
-curl -s http://localhost:3000/chat -H 'Content-Type: application/json' \
-  -d '{"text":"19:30","sessionId":"demo-user-001"}' | jq .
-
-curl -s http://localhost:3000/chat -H 'Content-Type: application/json' \
-  -d '{"text":"김도영","sessionId":"demo-user-001"}' | jq .
-
-curl -s http://localhost:3000/chat -H 'Content-Type: application/json' \
-  -d '{"text":"010-1234-5678","sessionId":"demo-user-001"}' | jq .
+---
+```
+root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -s http://localhost:3000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"강남점 토익 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
+{
+  "error": "Lambda 호출 실패: {\"errorType\":\"TypeError\",\"errorMessage\":\"Cannot read properties of undefined (reading 'intent')\",\"trace\":[\"TypeError: Cannot read properties of undefined (reading 'intent')\",\"    at close (/var/task/index.js:23:31)\",\"    at exports.handler (/var/task/index.js:123:10)\",\"    at Runtime.handleOnceNonStreaming (file:///var/runtime/index.mjs:1306:29)\"]}",
+  "hint": "AWS_REGION / LEX_BOT_ID / LEX_BOT_ALIAS_ID / (옵션) LEX_LOCALE_ID 환경변수와 AWS 자격증명 설정을 확인하세요."
 ```
 
 ---
