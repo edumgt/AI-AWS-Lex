@@ -55,6 +55,19 @@
 
 ## 3) 런타임 아키텍처(요약)
 
+```mermaid
+flowchart TD
+    A[사용자\n웹/모바일/Postman] -->|POST /chat| B[Express API\nserver/index.js]
+    B --> C[입력값 검증\ntext/sessionId]
+    C --> D[Lex Runtime 호출\nserver/lexClient.js\nRecognizeText]
+    D --> E[Amazon Lex V2\nIntent/Slot 해석]
+    E -->|Fulfillment 필요| F[Lambda\nlambda/fulfillment.js]
+    E -->|Fulfillment 불필요| G[Lex 응답 생성]
+    F --> G
+    G --> H[Express 응답 포맷팅\nintent/state/messages/slots/raw]
+    H --> I[클라이언트 응답 반환]
+```
+
 1. 사용자가 클라이언트(웹/모바일/Postman)에서 `POST /chat` 호출
 2. Express 서버(`server/index.js`)가 입력 텍스트를 검증
 3. `server/lexClient.js`가 `RecognizeText`를 Lex Runtime V2에 전달
