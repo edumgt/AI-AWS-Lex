@@ -252,3 +252,32 @@ Lex Alias에 Fulfillment 코드훅으로 연결합니다.
 ### AWS Infra Architecture
 
 ![](./sample.png)
+
+## API GW 기초 부터 붙여보기
+```
+arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment
+```
+---
+```
+REGION=ap-northeast-2
+LAMBDA_ARN="arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment"
+
+aws apigatewayv2 create-api \
+  --region "$REGION" \
+  --name "my-http-api" \
+  --protocol-type HTTP \
+  --target "$LAMBDA_ARN"
+```
+---
+```
+ACCOUNT_ID="086015456585"
+API_ID="n67z2umjee"
+
+aws lambda add-permission \
+  --region "$REGION" \
+  --function-name LexReservationFulfillment \
+  --statement-id apigw-invoke \
+  --action lambda:InvokeFunction \
+  --principal apigateway.amazonaws.com \
+  --source-arn "arn:aws:execute-api:${REGION}:${ACCOUNT_ID}:${API_ID}/*/*/*"
+```
