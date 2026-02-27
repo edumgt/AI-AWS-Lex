@@ -285,3 +285,97 @@ aws lambda add-permission \
 ## 관련 문서 : https://chatgpt.com/share/69a0f811-9f40-8007-b939-1b963a13144e
 
 ---
+```
+API_ID="n67z2umjee"
+
+aws apigatewayv2 create-integration \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --integration-type AWS_PROXY \
+  --integration-uri "$LAMBDA_ARN" \
+  --payload-format-version "2.0"
+```
+---
+```
+root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# API_ID="n67z2umjee"
+
+aws apigatewayv2 create-integration \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --integration-type AWS_PROXY \
+  --integration-uri "$LAMBDA_ARN" \
+  --payload-format-version "2.0"
+{
+    "ConnectionType": "INTERNET",
+    "IntegrationId": "m256q0e",
+    "IntegrationMethod": "POST",
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": "arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment",
+    "PayloadFormatVersion": "2.0",
+    "TimeoutInMillis": 30000
+}
+```
+---
+```
+INTEGRATION_ID="m256q0e"
+aws apigatewayv2 create-route \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --route-key "POST /chat" \
+  --target "integrations/$INTEGRATION_ID"
+```
+---
+```
+root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# aws apigatewayv2 create-deployment \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --stage-name "dev"
+
+An error occurred (BadRequestException) when calling the CreateDeployment operation: Stage dev does not exist. StageName specified on a CreateDeployment request must exist so the stage can be updated with the new deployment.
+```
+
+---
+```
+aws apigatewayv2 create-route \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --route-key "GET /health" \
+  --target "integrations/m256q0e"
+```
+---
+curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
+```
+---
+```
+root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
+HTTP/2 500 
+date: Fri, 27 Feb 2026 02:43:04 GMT
+content-type: application/json
+content-length: 35
+apigw-requestid: Za2sziyeIE0EJtw=
+```
+---
+```
+aws lambda get-policy \
+  --region "$REGION" \
+  --function-name "LexReservationFulfillment"
+```
+---
+```
+root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# aws lambda get-policy \
+  --region "$REGION" \
+  --function-name "LexReservationFulfillment"
+{
+    "Policy": "{\"Version\":\"2012-10-17\",\"Id\":\"default\",\"Statement\":[{\"Sid\":\"LexInvokePermission-OFNMS2HLFJ-F0AD9LP8EP\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lexv2.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:lex:ap-northeast-2:086015456585:bot-alias/OFNMS2HLFJ/F0AD9LP8EP\"}}},{\"Sid\":\"LexInvokePermission-OFNMS2HLFJ-7LRGRB54T9\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lexv2.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:lex:ap-northeast-2:086015456585:bot-alias/OFNMS2HLFJ/7LRGRB54T9\"}}},{\"Sid\":\"apigw-invoke\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"apigateway.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:execute-api:ap-northeast-2:086015456585:n67z2umjee/*/*/*\"}}}]}",
+    "RevisionId": "b517484d-48df-4689-8135-8afe5e96eed0"
+}
+```
+---
+```
+root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
+HTTP/2 200 
+date: Fri, 27 Feb 2026 02:51:09 GMT
+content-type: application/json
+content-length: 49
+apigw-requestid: Za34jiC9oE0EMsg=
+```
