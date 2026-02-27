@@ -341,11 +341,10 @@ aws apigatewayv2 create-route \
   --api-id "$API_ID" \
   --route-key "GET /health" \
   --target "integrations/m256q0e"
-```
----
+
 curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
-```
----
+
+
 ```
 root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
 HTTP/2 500 
@@ -369,8 +368,7 @@ root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# aws lambda get-policy \
     "Policy": "{\"Version\":\"2012-10-17\",\"Id\":\"default\",\"Statement\":[{\"Sid\":\"LexInvokePermission-OFNMS2HLFJ-F0AD9LP8EP\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lexv2.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:lex:ap-northeast-2:086015456585:bot-alias/OFNMS2HLFJ/F0AD9LP8EP\"}}},{\"Sid\":\"LexInvokePermission-OFNMS2HLFJ-7LRGRB54T9\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lexv2.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:lex:ap-northeast-2:086015456585:bot-alias/OFNMS2HLFJ/7LRGRB54T9\"}}},{\"Sid\":\"apigw-invoke\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"apigateway.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:execute-api:ap-northeast-2:086015456585:n67z2umjee/*/*/*\"}}}]}",
     "RevisionId": "b517484d-48df-4689-8135-8afe5e96eed0"
 }
-```
----
+
 
 ```
 root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
@@ -379,9 +377,7 @@ date: Fri, 27 Feb 2026 02:51:09 GMT
 content-type: application/json
 content-length: 49
 apigw-requestid: Za34jiC9oE0EMsg=
-```
 
----
 
 ```
 # health
@@ -419,4 +415,12 @@ aws apigatewayv2 create-route \
   --route-key "GET /" \
   --target "integrations/m256q0e"
 
+
+
+### 일괄생성 예시
 ```
+apigwinstall.sh 실행
+```
+![](./apigwinstall.png)
+
+
