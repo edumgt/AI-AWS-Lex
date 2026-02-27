@@ -371,6 +371,7 @@ root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# aws lambda get-policy \
 }
 ```
 ---
+
 ```
 root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
 HTTP/2 200 
@@ -378,4 +379,44 @@ date: Fri, 27 Feb 2026 02:51:09 GMT
 content-type: application/json
 content-length: 49
 apigw-requestid: Za34jiC9oE0EMsg=
+```
+
+---
+
+```
+# health
+aws apigatewayv2 create-route \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --route-key "GET /health" \
+  --target "integrations/m256q0e"
+
+# 지점 목록
+aws apigatewayv2 create-route \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --route-key "GET /branches" \
+  --target "integrations/m256q0e"
+
+# 강좌 목록
+aws apigatewayv2 create-route \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --route-key "GET /courses" \
+  --target "integrations/m256q0e"
+
+# 예약 API
+aws apigatewayv2 create-route \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --route-key "POST /reservation" \
+  --target "integrations/m256q0e"
+
+# 루트 확인용
+aws apigatewayv2 create-route \
+  --region "$REGION" \
+  --api-id "$API_ID" \
+  --route-key "GET /" \
+  --target "integrations/m256q0e"
+
 ```
