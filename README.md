@@ -281,3 +281,7 @@ aws lambda add-permission \
   --principal apigateway.amazonaws.com \
   --source-arn "arn:aws:execute-api:${REGION}:${ACCOUNT_ID}:${API_ID}/*/*/*"
 ```
+---
+## 관련 문서 : https://chatgpt.com/share/69a0f811-9f40-8007-b939-1b963a13144e
+
+---
