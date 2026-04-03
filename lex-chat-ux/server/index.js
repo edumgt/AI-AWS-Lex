@@ -84,5 +84,6 @@ app.post("/api/chat", async (req, res) => {
 
 const port = Number(process.env.PORT || 3000);
 app.listen(port, () => {
-  console.log(`[lex-chat-ux] listening on http://localhost:${port}`);
+  console.log(`[lex-chat-ux] API server listening on http://localhost:${port}`);
+  console.log(`[lex-chat-ux] Frontend (Quasar) should be on http://localhost:9000`);
 });
