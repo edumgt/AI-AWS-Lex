@@ -82,7 +82,7 @@ bash infra/lex-bootstrap.sh
 
 ### 작업 지연 필요 시
 ```
-root@DESKTOP-D6A344Q:/home/AI-AWS-Lex# BOT_ID=OFNMS2HLFJ
+root@DESKTOP-D6A344Q:/home/AI-AWS-Lex# BOT_ID=38N5QKAZMD
 REGION=ap-northeast-2
 while true; do
   S=$(aws --region $REGION lexv2-models describe-bot --bot-id $BOT_ID --query botStatus --output text)
@@ -109,14 +109,14 @@ FORCE_REFRESH_BUILTIN_CACHE=true bash infra/lex-bootstrap.sh
 ```
 [9/9] 결과 요약
 ✅ 완료
-- BOT_ID=OFNMS2HLFJ
+- BOT_ID=38N5QKAZMD
 - BOT_VERSION=3
 - BOT_ALIAS_ID=F0AD9LP8EP
 - LOCALE_ID=ko_KR
 
 Node 서버에서 사용할 환경변수:
 export AWS_REGION=ap-northeast-2
-export LEX_BOT_ID=OFNMS2HLFJ
+export LEX_BOT_ID=38N5QKAZMD
 export LEX_BOT_ALIAS_ID=F0AD9LP8EP
 export LEX_LOCALE_ID=ko_KR
 
@@ -158,14 +158,14 @@ node index.js
 ---
 ```
 aws --region ap-northeast-2 lexv2-models list-bot-aliases \
-  --bot-id OFNMS2HLFJ \
+  --bot-id 38N5QKAZMD \
   --query "botAliasSummaries[].{name:botAliasName,id:botAliasId,status:botAliasStatus,version:botVersion}" \
   --output table
 ```
 
 ```
 export AWS_REGION=ap-northeast-2
-export LEX_BOT_ID=OFNMS2HLFJ
+export LEX_BOT_ID=38N5QKAZMD
 export LEX_BOT_ALIAS_ID=F0AD9LP8EP
 export LEX_LOCALE_ID=ko_KR
 node index.js
@@ -191,12 +191,21 @@ cd /tmp/lexlambda && zip -qr /tmp/lexlambda.zip .
 # 4) Lambda 함수 생성(이미 있으면 업데이트)
 ```
 aws --region $REGION lambda get-function --function-name $FUNC_NAME >/dev/null 2>&1 && \
+```
+---
+```
 aws --region $REGION lambda update-function-code --function-name $FUNC_NAME --zip-file fileb:///tmp/lexlambda.zip >/dev/null || \
+```
+
+### arn:aws:iam::086015456585:role/LexLabServiceRole
+
+---
+```
 aws --region $REGION lambda create-function \
   --function-name $FUNC_NAME \
   --runtime nodejs20.x \
   --handler index.handler \
-  --role $ROLE_ARN \
+  --role arn:aws:iam::086015456585:role/LexLabServiceRole \
   --zip-file fileb:///tmp/lexlambda.zip >/dev/null
 
 LAMBDA_ARN=$(aws --region $REGION lambda get-function --function-name $FUNC_NAME --query 'Configuration.FunctionArn' --output text)
@@ -206,8 +215,8 @@ echo "LAMBDA_ARN=$LAMBDA_ARN"
 ### 람다 연결
 ```
 REGION=ap-northeast-2
-BOT_ID=OFNMS2HLFJ
-ALIAS_NAME=Prod
+BOT_ID=38N5QKAZMD
+ALIAS_NAME=DEV
 LOCALE_ID=ko_KR
 LAMBDA_ARN="arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment"
 
@@ -244,10 +253,10 @@ aws --region $REGION lexv2-models update-bot-alias \
 ```
 REGION=ap-northeast-2
 ACCOUNT_ID=086015456585
-BOT_ID=OFNMS2HLFJ
+BOT_ID=38N5QKAZMD
 ALIAS_ID=$(aws --region $REGION lexv2-models list-bot-aliases \
   --bot-id "$BOT_ID" \
-  --query "botAliasSummaries[?botAliasName=='Prod'].botAliasId | [0]" --output text)
+  --query "botAliasSummaries[?botAliasName=='DEV'].botAliasId | [0]" --output text)
 
 LAMBDA_ARN="arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment"
 
@@ -264,17 +273,9 @@ aws --region $REGION lambda add-permission \
 ### 결과 확인
 ```
 aws --region ap-northeast-2 lexv2-models describe-bot-alias \
-  --bot-id OFNMS2HLFJ \
+  --bot-id 38N5QKAZMD \
   --bot-alias-id "$ALIAS_ID" \
   --query botAliasStatus --output text
-```
----
-```
-root@DESKTOP-D6A344Q:/home/AI-AWS-Lex# aws --region ap-northeast-2 lexv2-models describe-bot-alias \
-  --bot-id OFNMS2HLFJ \
-  --bot-alias-id "$ALIAS_ID" \
-  --query botAliasStatus --output text
-Available
 ```
 
 # 테스트:

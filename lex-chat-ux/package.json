@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.990.0",
-    "@aws-sdk/client-lex-runtime-v2": "^3.990.0",
     "@aws-sdk/client-lex-models-v2": "^3.990.0",
+    "@aws-sdk/client-lex-runtime-v2": "^3.990.0",
     "@quasar/extras": "^1.16.9",
     "axios": "^1.6.5",
     "cookie-parser": "^1.4.6",
@@ -26,10 +26,12 @@
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@quasar/app-vite": "^1.7.3",
     "@vitejs/plugin-vue": "^5.0.3",
     "autoprefixer": "^10.4.17",
     "concurrently": "^8.2.2",
+    "playwright": "^1.59.1",
     "postcss": "^8.4.33",
     "sass": "^1.70.0",
     "tailwindcss": "^3.4.1",

@@ -1,11 +1,15 @@
 <template>
-  <router-view />
+  <div id="app">
+    <router-view />
+  </div>
 </template>
 
-<script setup>
-// App.vue - Main application component
+<script>
+export default {
+  name: 'App'
+}
 </script>
 
-<style scoped>
+<style>
 /* Global app styles */
 </style>
