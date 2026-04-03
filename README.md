@@ -2,7 +2,7 @@
 
 ![alt text](image-1.png)
 
-![alt text](image.png)
+
 
 이 레포는 **Amazon Lex V2 챗봇**을 구축하고, **Lambda Fulfillment(Node.js)** 및 **Express API 서버**를 통해
 **Lex Runtime V2(RecognizeText)** 를 호출하는 전체 흐름을 실습하도록 구성되어 있습니다.
