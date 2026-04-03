@@ -19,10 +19,7 @@ module.exports = configure(function (ctx) {
         node: 'node18'
       },
       
-      vueRouterMode: 'hash',
-      vitePlugins: [
-        ['@vitejs/plugin-vue', {}]
-      ],
+      vueRouterMode: 'history',
       
       extendViteConf(viteConf) {
         viteConf.css = viteConf.css || {};

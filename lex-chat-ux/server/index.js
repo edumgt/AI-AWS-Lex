@@ -4,9 +4,7 @@ const cookieParser = require("cookie-parser");
 const { nanoid } = require("nanoid");
 require("dotenv").config();
 
-// const { recognizeText } = require("./lexClient");
-
-const { invokeReservationFulfillment } = require("./lambdaClient");
+const { recognizeText } = require("./lexClient");
 
 const { formatLexResponse } = require("./lexFormatter");
 const { getSuggestions } = require("./suggestions");
@@ -22,9 +20,13 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 app.get("/api/engines", (req, res) => {
+  const engines = getEnabledEngines();
+  const defaultEngine = (process.env.DEFAULT_AI_ENGINE || "aws-lex").toString().trim();
+  const enabledIds = new Set(engines.map((engine) => engine.key));
+
   res.json({
-    defaultEngine: process.env.DEFAULT_AI_ENGINE || "aws-lex",
-    engines: getEnabledEngines()
+    defaultEngine: enabledIds.has(defaultEngine) ? defaultEngine : "aws-lex",
+    engines
   });
 });
 
@@ -44,7 +46,10 @@ app.get("/api/suggestions", async (req, res) => {
 app.post("/api/chat", async (req, res) => {
   try {
     const text = (req.body?.text || "").toString().trim();
-    const engine = (req.body?.engine || process.env.DEFAULT_AI_ENGINE || "aws-lex").toString().trim();
+    const requestedEngine = (req.body?.engine || process.env.DEFAULT_AI_ENGINE || "aws-lex").toString().trim();
+    const enabledEngines = getEnabledEngines();
+    const enabledIds = new Set(enabledEngines.map((engine) => engine.key));
+    const engine = enabledIds.has(requestedEngine) ? requestedEngine : "aws-lex";
     if (!text) return res.status(400).json({ error: "text is required" });
 
     // sessionId: body 우선 -> cookie -> 생성
@@ -58,10 +63,8 @@ app.post("/api/chat", async (req, res) => {
       return res.json(out);
     }
 
-    // const raw = await recognizeText({ text, sessionId });
-    // const out = formatLexResponse({ raw, sessionId });
-
-    const out = await invokeReservationFulfillment({ text, sessionId });
+    const raw = await recognizeText({ text, sessionId });
+    const out = formatLexResponse({ raw, sessionId });
     
     // Quick replies 자동 주입: ElicitSlot일 때
     if (out?.ui?.mode === "elicit_slot" && out.ui.slotToElicit) {

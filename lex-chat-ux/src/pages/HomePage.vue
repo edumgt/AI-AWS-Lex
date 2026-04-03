@@ -27,7 +27,16 @@
             <p class="text-xl text-gray-600 mb-8 fade-in">
               토익, 토플, 영어회화부터 각종 자격증까지<br />전문 강사진과 함께하는 맞춤형 교육
             </p>
-            <q-btn unelevated rounded size="lg" label="수강 상담하기" color="primary" class="text-lg px-8 py-3 fade-in" icon-right="arrow_forward" />
+            <q-btn
+              unelevated
+              rounded
+              size="lg"
+              label="수강 상담하기"
+              color="primary"
+              class="text-lg px-8 py-3 fade-in"
+              icon-right="arrow_forward"
+              @click="openChatbot"
+            />
           </div>
         </section>
 
@@ -86,9 +95,22 @@
           <div class="max-w-4xl mx-auto text-center">
             <h2 class="text-4xl font-bold mb-6">지금 바로 시작하세요</h2>
             <p class="text-xl mb-8">무료 상담을 통해 맞춤형 학습 계획을 세워드립니다</p>
-            <q-btn unelevated rounded size="lg" label="무료 상담 신청" color="white" text-color="primary" class="text-lg px-8 py-3" icon-right="phone" />
+            <q-btn
+              unelevated
+              rounded
+              size="lg"
+              label="무료 상담 신청"
+              color="white"
+              text-color="primary"
+              class="text-lg px-8 py-3"
+              icon-right="phone"
+              @click="openChatbot"
+            />
           </div>
         </section>
+
+        <ChatbotButton @open-chat="openChatbot" />
+        <ChatbotDialog v-model="chatbotOpen" />
       </q-page>
     </q-page-container>
   </q-layout>
@@ -96,6 +118,14 @@
 
 <script setup>
 import { ref } from 'vue';
+import ChatbotButton from '../components/ChatbotButton.vue';
+import ChatbotDialog from '../components/ChatbotDialog.vue';
+
+const chatbotOpen = ref(false);
+
+const openChatbot = () => {
+  chatbotOpen.value = true;
+};
 
 const programs = ref([
   {

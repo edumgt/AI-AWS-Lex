@@ -202,12 +202,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useChatStore } from '../stores/chatStore';
+import { pinia } from '../stores/pinia';
 
 const $q = useQuasar();
-const chatStore = useChatStore();
+const chatStore = useChatStore(pinia);
 
 const props = defineProps({
   modelValue: Boolean
@@ -252,6 +253,10 @@ watch(dialogOpen, (newVal) => {
       addBotMessage('안녕하세요! 무엇을 도와드릴까요?\n예) "강남점 토익 예약하고 싶어요"');
     }
   }
+});
+
+onMounted(() => {
+  chatStore.loadFromLocalStorage();
 });
 
 watch(messages, () => {

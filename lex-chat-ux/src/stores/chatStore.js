@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
+function normalizeEngineId(engine) {
+  if (typeof engine === 'string') return engine;
+  if (engine && typeof engine === 'object') {
+    return engine.key || engine.id || engine.name || '';
+  }
+  return '';
+}
+
 export const useChatStore = defineStore('chat', {
   state: () => ({
     messages: [],
@@ -26,27 +34,44 @@ export const useChatStore = defineStore('chat', {
         const response = await axios.get('/api/engines');
         const data = response.data;
         
-        this.availableEngines = [
-          { id: 'aws-lex', name: 'AWS Lex' },
-          ...data.engines.map(e => ({
-            id: e,
-            name: e.toUpperCase().replace(/-/g, ' ')
-          }))
-        ];
-        
-        this.selectedEngine = data.defaultEngine || 'aws-lex';
+        this.availableEngines = (Array.isArray(data.engines) ? data.engines : [])
+          .map((engine) => {
+            if (typeof engine === 'string') {
+              return {
+                id: engine,
+                name: engine.toUpperCase().replace(/-/g, ' ')
+              };
+            }
+
+            return {
+              id: engine.key || engine.id || 'unknown',
+              name: engine.label || engine.name || String(engine.key || engine.id || 'UNKNOWN')
+            };
+          })
+          .filter((engine) => engine.id && engine.name);
+
+        if (!this.availableEngines.length) {
+          this.availableEngines = [{ id: 'aws-lex', name: 'AWS Lex' }];
+        }
+
+        const candidateEngine = normalizeEngineId(this.selectedEngine) || normalizeEngineId(data.defaultEngine) || 'aws-lex';
+        const isKnown = this.availableEngines.some((engine) => engine.id === candidateEngine);
+        this.selectedEngine = isKnown ? candidateEngine : 'aws-lex';
       } catch (error) {
         console.error('Failed to load engines:', error);
         this.availableEngines = [{ id: 'aws-lex', name: 'AWS Lex' }];
+        this.selectedEngine = 'aws-lex';
       }
     },
 
     async sendMessage(text) {
       try {
+        const engineId = normalizeEngineId(this.selectedEngine) || 'aws-lex';
+
         const response = await axios.post('/api/chat', {
           text,
           sessionId: this.sessionId,
-          engine: this.selectedEngine
+          engine: engineId
         });
 
         const data = response.data;
@@ -106,7 +131,7 @@ export const useChatStore = defineStore('chat', {
     },
 
     setEngine(engineId) {
-      this.selectedEngine = engineId;
+      this.selectedEngine = normalizeEngineId(engineId) || 'aws-lex';
       this.saveToLocalStorage();
     },
 
@@ -141,7 +166,7 @@ export const useChatStore = defineStore('chat', {
           this.messages = state.messages || [];
           this.sessionId = state.sessionId || '';
           this.summaryItems = state.summaryItems || [];
-          this.selectedEngine = state.selectedEngine || 'aws-lex';
+          this.selectedEngine = normalizeEngineId(state.selectedEngine) || 'aws-lex';
         }
       } catch (error) {
         console.error('Failed to load from localStorage:', error);

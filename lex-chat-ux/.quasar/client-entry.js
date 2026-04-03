@@ -83,7 +83,7 @@ async function start ({
     // continue if we didn't fail to resolve the url
     if (href !== null) {
       window.location.href = href
-      window.location.reload()
+      
     }
   }
 
