@@ -10,6 +10,8 @@ env:
   IMAGE_TAG: "0.01"
   CONTAINER_NAME: lexapp
   DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/lexapp
+  AWS_REGION: ap-northeast-2
+  ECR_IMAGE: 086015456585.dkr.ecr.ap-northeast-2.amazonaws.com/edumgt/lexapp
 
 jobs:
   publish-dockerhub:
@@ -28,6 +30,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
@@ -37,6 +49,8 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_IMAGE }}:${{ env.IMAGE_TAG }}
             ${{ env.DOCKERHUB_IMAGE }}:latest
+            ${{ env.ECR_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.ECR_IMAGE }}:latest
 
   deploy-local-docker:
     runs-on: self-hosted
