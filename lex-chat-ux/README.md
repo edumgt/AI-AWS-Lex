@@ -17,6 +17,23 @@ Amazon Lex V2 Runtime 호출 + "대화형 UX" 렌더링 예제입니다.
 ### 챗봇 버튼이 있는 홈페이지
 ![Homepage with Chatbot](screenshots/homepage-with-chatbot.png)
 
+## Docker 실행
+
+`lex-chat-ux`는 Node.js 기반 개발 서버 컨테이너로 바로 실행할 수 있습니다.
+
+```bash
+cd lex-chat-ux
+docker build -t lex-chat-ux .
+docker run --rm -it \
+  -p 3000:3000 \
+  -p 9000:9000 \
+  --env-file .env \
+  lex-chat-ux
+```
+
+- 프론트: `http://localhost:9000`
+- API: `http://localhost:3000`
+
 ## 주요 UX 기능
 - 슬롯별 추천 버튼(Quick Replies) 자동 생성  
   - `.env`의 `BRANCH_VALUES`, `COURSE_VALUES`를 사용하거나  

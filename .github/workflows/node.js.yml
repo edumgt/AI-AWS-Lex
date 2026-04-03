@@ -1,31 +1,49 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI
+name: Local Docker Deploy
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+env:
+  APP_DIR: lex-chat-ux
+  IMAGE_NAME: lexapp
+  IMAGE_TAG: "0.01"
+  CONTAINER_NAME: lexapp
 
 jobs:
-  build:
+  deploy-local-docker:
+    runs-on: self-hosted
 
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    defaults:
+      run:
+        working-directory: ${{ env.APP_DIR }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Docker version
+        run: docker --version
+
+      - name: Stop existing container
+        run: docker stop ${{ env.CONTAINER_NAME }} || true
+
+      - name: Remove existing container
+        run: docker rm ${{ env.CONTAINER_NAME }} || true
+
+      - name: Remove previous image
+        run: docker rmi ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} || true
+
+      - name: Build image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+
+      - name: Run container
+        run: |
+          docker run -d --rm \
+            --name ${{ env.CONTAINER_NAME }} \
+            -p 3000:3000 \
+            -p 9000:9000 \
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      - name: Check running container
+        run: docker ps

@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+dist
+.quasar
+screenshots
+Dockerfile.screenshot
+package-screenshot.json
+*.local
