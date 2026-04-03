@@ -145,6 +145,14 @@
       </q-card-section>
 
       <!-- Quick Replies / Chips -->
+      <q-card-section v-if="slotToElicit === 'Branch'" class="py-3 bg-slate-50 border-t">
+        <CampusMapPicker
+          compact
+          :selected-branch="selectedBranch"
+          @select="sendQuickReply"
+        />
+      </q-card-section>
+
       <q-card-section v-if="quickReplies.length > 0" class="py-2 bg-white border-t">
         <div class="flex flex-wrap gap-2">
           <q-btn
@@ -206,6 +214,7 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useChatStore } from '../stores/chatStore';
 import { pinia } from '../stores/pinia';
+import CampusMapPicker from './CampusMapPicker.vue';
 
 const $q = useQuasar();
 const chatStore = useChatStore(pinia);
@@ -234,6 +243,11 @@ const selectedEngine = computed(() => chatStore.selectedEngine);
 const availableEngines = computed(() => chatStore.availableEngines);
 const inputPlaceholder = computed(() => chatStore.inputPlaceholder);
 const inputType = computed(() => chatStore.inputType);
+const slotToElicit = computed(() => chatStore.slotToElicit);
+const selectedBranch = computed(() => {
+  const branchItem = summaryItems.value.find((item) => item.key === 'Branch');
+  return branchItem?.value || '';
+});
 
 const cardStyle = computed(() => {
   if ($q.screen.lt.md) {
@@ -246,12 +260,23 @@ const cardStyle = computed(() => {
   };
 });
 
+const consumeBranchPrefill = () => {
+  const branch = localStorage.getItem('lex_chat_ux_branch_prefill');
+  if (!branch) return;
+  localStorage.removeItem('lex_chat_ux_branch_prefill');
+
+  nextTick(() => {
+    sendQuickReply(branch);
+  });
+};
+
 watch(dialogOpen, (newVal) => {
   if (newVal) {
     chatStore.loadEngines();
     if (messages.value.length === 0) {
       addBotMessage('안녕하세요! 무엇을 도와드릴까요?\n예) "강남점 토익 예약하고 싶어요"');
     }
+    consumeBranchPrefill();
   }
 });
 

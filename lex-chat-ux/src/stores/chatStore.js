@@ -14,6 +14,7 @@ export const useChatStore = defineStore('chat', {
     messages: [],
     sessionId: '',
     summaryItems: [],
+    lastReservation: null,
     quickReplies: [],
     selectedEngine: 'aws-lex',
     availableEngines: [],
@@ -84,6 +85,17 @@ export const useChatStore = defineStore('chat', {
           this.summaryItems = data.summary;
         }
 
+        if (data.intent === 'MakeReservation' && data.state === 'Fulfilled' && Array.isArray(data.summary)) {
+          this.lastReservation = {
+            createdAt: new Date().toISOString(),
+            fields: data.summary.reduce((acc, item) => {
+              if (item?.key) acc[item.key] = item.value || '';
+              return acc;
+            }, {}),
+            message: Array.isArray(data.messages) ? data.messages[0] || '' : ''
+          };
+        }
+
         // Update input UI based on response
         this.updateInputUI(data.ui);
 
@@ -152,6 +164,7 @@ export const useChatStore = defineStore('chat', {
         messages: this.messages,
         sessionId: this.sessionId,
         summaryItems: this.summaryItems,
+        lastReservation: this.lastReservation,
         selectedEngine: this.selectedEngine,
         updatedAt: Date.now()
       };
@@ -166,6 +179,7 @@ export const useChatStore = defineStore('chat', {
           this.messages = state.messages || [];
           this.sessionId = state.sessionId || '';
           this.summaryItems = state.summaryItems || [];
+          this.lastReservation = state.lastReservation || null;
           this.selectedEngine = normalizeEngineId(state.selectedEngine) || 'aws-lex';
         }
       } catch (error) {

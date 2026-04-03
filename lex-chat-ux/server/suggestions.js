@@ -1,4 +1,5 @@
 const { LexModelsV2Client, ListSlotTypesCommand, DescribeSlotTypeCommand } = require("@aws-sdk/client-lex-models-v2");
+const campusLocations = require("../shared/campusLocations.json");
 
 function parseCsv(v) {
   if (!v) return [];
@@ -46,6 +47,8 @@ async function fetchSlotTypeValuesFromModels({ region, botId, botVersion, locale
 async function getSuggestions({ slot, env, region }) {
   // 1) .env 기반 우선
   if (slot === "Branch") {
+    const fromCatalog = campusLocations.map((campus) => campus.name).filter(Boolean);
+    if (fromCatalog.length) return fromCatalog;
     const fromEnv = parseCsv(env.BRANCH_VALUES);
     if (fromEnv.length) return fromEnv;
   }

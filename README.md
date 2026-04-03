@@ -2,6 +2,12 @@
 
 ![alt text](image-1.png)
 
+## 오늘 예약 리마인더 모달
+
+다음 접속 시 localStorage에 저장된 예약 정보의 날짜가 오늘과 같으면 홈페이지에서 바로 예약 확인 모달이 뜹니다. 아래 예시는 `2026-04-03` 기준 금일 예약 더미 데이터를 넣어 캡처한 화면입니다.
+
+![오늘 예약 리마인더 모달](lex-chat-ux/screenshots/today-reservation-modal.png)
+
 
 
 이 레포는 **Amazon Lex V2 챗봇**을 구축하고, **Lambda Fulfillment(Node.js)** 및 **Express API 서버**를 통해
@@ -551,5 +557,4 @@ aws apigatewayv2 create-route \
 apigwinstall.sh 실행
 ```
 ![](./apigwinstall.png)
-
 

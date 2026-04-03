@@ -161,9 +161,11 @@ function extractSlotValue(slot, text, catalogs) {
   return null;
 }
 
-function extractAll(text, catalogs) {
+function extractAll(text, catalogs, options = {}) {
+  const includeStudentName = options.includeStudentName === true;
   const slots = {};
   for (const slot of SLOT_ORDER) {
+    if (slot === "StudentName" && !includeStudentName) continue;
     const value = extractSlotValue(slot, text, catalogs);
     if (value) slots[slot] = value;
   }
@@ -173,6 +175,16 @@ function extractAll(text, catalogs) {
 function isReservationIntent(text) {
   const normalized = normalizeWhitespace(text);
   return /(예약|수강신청|상담신청|등록)/.test(normalized);
+}
+
+function hasReservationSignals(detected) {
+  return Boolean(
+    detected.Branch ||
+    detected.CourseName ||
+    detected.Date ||
+    detected.Time ||
+    detected.PhoneNumber
+  );
 }
 
 function makePromptResponse({ sessionId, slots, slot, suggestions }) {
@@ -228,9 +240,12 @@ async function runReservationFlow({ text, sessionId, getSuggestions }) {
   const courses = await getSuggestions("CourseName");
   const catalogs = { branches, courses };
   const existing = getSession(sessionId);
-  const detected = extractAll(text, catalogs);
+  const expectedSlot = existing ? getNextMissingSlot(existing.slots || {}) : null;
+  const detected = extractAll(text, catalogs, {
+    includeStudentName: expectedSlot === "StudentName"
+  });
 
-  if (!existing && !isReservationIntent(text)) {
+  if (!existing && !isReservationIntent(text) && !hasReservationSignals(detected)) {
     return null;
   }
 

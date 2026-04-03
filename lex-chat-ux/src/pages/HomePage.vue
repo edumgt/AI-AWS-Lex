@@ -91,6 +91,42 @@
           </div>
         </section>
 
+        <section class="campus-section py-16 px-4 bg-slate-950 text-white">
+          <div class="max-w-7xl mx-auto grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-center">
+            <div class="space-y-4">
+              <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Campus Navigator</p>
+              <h2 class="text-4xl font-bold leading-tight">동대구역, 서대구역, 서문시장 캠퍼스를 지도에서 바로 고르세요</h2>
+              <p class="text-slate-300 text-lg">
+                다음 접속 때 오늘 예약이 있으면 바로 리마인더를 띄우고, 챗봇 안에서는 지리 좌표 기반 캠퍼스 선택으로 빠르게 예약을 이어갈 수 있습니다.
+              </p>
+              <div class="flex flex-wrap gap-3">
+                <q-chip
+                  v-for="campus in campuses"
+                  :key="campus.id"
+                  color="white"
+                  text-color="primary"
+                  icon="place"
+                >
+                  {{ campus.name }} · {{ campus.lat.toFixed(4) }}, {{ campus.lng.toFixed(4) }}
+                </q-chip>
+              </div>
+              <q-btn
+                unelevated
+                rounded
+                color="cyan-4"
+                text-color="dark"
+                label="챗봇으로 캠퍼스 선택하기"
+                icon-right="map"
+                @click="openChatbot"
+              />
+            </div>
+
+            <div class="campus-preview-card">
+              <CampusMapPicker @select="openChatbotWithBranch" />
+            </div>
+          </div>
+        </section>
+
         <section class="cta-section py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
           <div class="max-w-4xl mx-auto text-center">
             <h2 class="text-4xl font-bold mb-6">지금 바로 시작하세요</h2>
@@ -111,21 +147,113 @@
 
         <ChatbotButton @open-chat="openChatbot" />
         <ChatbotDialog v-model="chatbotOpen" />
+
+        <q-dialog v-model="reservationReminderOpen">
+          <q-card class="reservation-reminder">
+            <q-card-section class="bg-emerald-600 text-white">
+              <div class="text-overline">Today Reminder</div>
+              <div class="text-h5 text-weight-bold">오늘 예약 일정이 있어요</div>
+            </q-card-section>
+
+            <q-card-section class="grid gap-4">
+              <div class="text-body1 text-grey-9">
+                {{ reminderMessage }}
+              </div>
+
+              <div class="reminder-summary">
+                <div v-for="item in reminderSummary" :key="item.label" class="summary-row">
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                </div>
+              </div>
+
+              <CampusMapPicker
+                :selected-branch="todayReservation?.Branch || ''"
+                @select="openChatbotWithBranch"
+              />
+            </q-card-section>
+
+            <q-card-actions align="right" class="q-pa-md">
+              <q-btn flat label="나중에 보기" color="grey-7" @click="dismissReminder" />
+              <q-btn unelevated color="primary" label="챗봇으로 예약 확인" @click="openReminderChat" />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
       </q-page>
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import ChatbotButton from '../components/ChatbotButton.vue';
 import ChatbotDialog from '../components/ChatbotDialog.vue';
+import CampusMapPicker from '../components/CampusMapPicker.vue';
+import campuses from '../../shared/campusLocations.json';
 
 const chatbotOpen = ref(false);
+const reservationReminderOpen = ref(false);
+const reminderDismissedKey = ref('');
+const todayReservation = ref(null);
 
 const openChatbot = () => {
   chatbotOpen.value = true;
 };
+
+const openChatbotWithBranch = (branch) => {
+  chatbotOpen.value = true;
+  if (!branch) return;
+  localStorage.setItem('lex_chat_ux_branch_prefill', branch);
+};
+
+const reminderSummary = computed(() => {
+  if (!todayReservation.value) return [];
+  return [
+    { label: '예약 지점', value: todayReservation.value.Branch || '-' },
+    { label: '과정', value: todayReservation.value.CourseName || '-' },
+    { label: '시간', value: `${todayReservation.value.Date || '-'} ${todayReservation.value.Time || ''}`.trim() },
+    { label: '예약자', value: todayReservation.value.StudentName || '-' }
+  ];
+});
+
+const reminderMessage = computed(() => {
+  if (!todayReservation.value) return '';
+  return `${todayReservation.value.StudentName || '예약자'}님, 오늘 ${todayReservation.value.Time || ''} ${todayReservation.value.Branch || ''} ${todayReservation.value.CourseName || ''} 예약이 예정되어 있습니다. 챗봇에서 위치와 예약 정보를 다시 확인할 수 있어요.`;
+});
+
+const dismissReminder = () => {
+  reservationReminderOpen.value = false;
+  if (reminderDismissedKey.value) {
+    localStorage.setItem(reminderDismissedKey.value, '1');
+  }
+};
+
+const openReminderChat = () => {
+  reservationReminderOpen.value = false;
+  openChatbot();
+};
+
+onMounted(() => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayKey = `${yyyy}-${mm}-${dd}`;
+  reminderDismissedKey.value = `lex_chat_ux_today_notice_dismissed_${todayKey}`;
+
+  try {
+    const stored = localStorage.getItem('lex_chat_ux_v3_state');
+    if (!stored) return;
+    const parsed = JSON.parse(stored);
+    const reservation = parsed?.lastReservation?.fields;
+    if (!reservation?.Date || reservation.Date !== todayKey) return;
+    if (localStorage.getItem(reminderDismissedKey.value) === '1') return;
+    todayReservation.value = reservation;
+    reservationReminderOpen.value = true;
+  } catch (error) {
+    console.error('Failed to load reservation reminder:', error);
+  }
+});
 
 const programs = ref([
   {
@@ -195,6 +323,36 @@ const features = ref([
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.campus-preview-card {
+  border-radius: 28px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  padding: 20px;
+  backdrop-filter: blur(12px);
+}
+
+.reservation-reminder {
+  width: min(760px, 92vw);
+  max-width: 760px;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.reminder-summary {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: #334155;
 }
 
 @media (max-width: 768px) {
