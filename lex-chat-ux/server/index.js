@@ -9,6 +9,7 @@ const { recognizeText } = require("./lexClient");
 const { formatLexResponse } = require("./lexFormatter");
 const { getSuggestions } = require("./suggestions");
 const { chatWithOnPremEngine, getEnabledEngines } = require("./onpremClient");
+const { runReservationFlow } = require("./reservationFlow");
 
 const app = express();
 app.use(express.json({ limit: "256kb" }));
@@ -61,6 +62,18 @@ app.post("/api/chat", async (req, res) => {
       const out = await chatWithOnPremEngine({ text, sessionId, engine });
       res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
       return res.json(out);
+    }
+
+    const reservationOut = await runReservationFlow({
+      text,
+      sessionId,
+      getSuggestions: async (slot) =>
+        getSuggestions({ slot, env: process.env, region: process.env.AWS_REGION })
+    });
+
+    if (reservationOut) {
+      res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
+      return res.json({ ...reservationOut, engine });
     }
 
     const raw = await recognizeText({ text, sessionId });
