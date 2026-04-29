@@ -1,5 +1,5 @@
 {
-  "name": "azure-lex-lab-server",
+  "name": "azure-clu-lab-server",
   "version": "1.0.0",
   "description": "Azure CLU 기반 챗봇 Express 서버 (학원 예약/상담 도메인)",
   "main": "index.js",

@@ -278,4 +278,4 @@ docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ol
 - [Ollama GitHub](https://github.com/ollama/ollama)
 - [Ollama REST API 명세](https://github.com/ollama/ollama/blob/main/docs/api.md)
 - [한국어 지원 모델 목록](https://ollama.ai/library)
-- [EXAONE 3.5 (LG AI Research)](https://ollama.com/library/exaone3.5)
+- [EXAONE 3.5 (LG AI Research)](https://ollama.ai/library/exaone3.5)
