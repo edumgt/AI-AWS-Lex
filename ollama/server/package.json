@@ -1,0 +1,12 @@
+{
+  "name": "ollama-lab-server",
+  "version": "1.0.0",
+  "description": "Ollama 온프렘 LLM 기반 챗봇 Express 서버 (학원 예약/상담 도메인)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

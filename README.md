@@ -149,6 +149,7 @@
 
 ## 1) 기술 스택
 
+### AWS (기본)
 - **클라우드**: AWS Lex V2, AWS Lambda, IAM, CloudWatch
 - **런타임/언어**: Node.js 18+, JavaScript(CommonJS)
 - **SDK/CLI**:
@@ -156,6 +157,16 @@
   - AWS CLI v2
 - **서버**: Express
 - **권장 리전**: `ap-northeast-2` (서울)
+
+### MS Azure (추가)
+- **클라우드**: Azure Language Service (CLU), Azure Functions, Azure Monitor
+- **SDK**: `@azure/ai-language-conversations`, `@azure/core-auth`
+- **서버**: Express (포트 3100)
+
+### Ollama 온프렘 (추가)
+- **LLM 런타임**: [Ollama](https://ollama.ai) (로컬/사내 서버)
+- **모델 예시**: llama3, exaone3.5(한국어), qwen2.5
+- **서버**: Express (포트 3200), 외부 SDK 의존성 없음
 
 ---
 
@@ -165,14 +176,29 @@
 .
 ├─ README.md                      # 프로젝트 전체 가이드(이 문서)
 ├─ docs/
-│  ├─ lex-design.md               # 인텐트/슬롯 설계표 + 콘솔 체크리스트
-│  └─ utterances-100.md           # Intent별 샘플 발화 100개
+│  ├─ lex-design.md               # [AWS] 인텐트/슬롯 설계표 + 콘솔 체크리스트
+│  ├─ azure-design.md             # [Azure] CLU 인텐트/엔티티 설계표
+│  └─ utterances-100.md           # Intent별 샘플 발화 100개 (AWS/Azure 공용)
 ├─ lambda/
-│  └─ fulfillment.js              # Lex Fulfillment Lambda 핸들러
+│  └─ fulfillment.js              # [AWS] Lex Fulfillment Lambda 핸들러
 ├─ server/
-│  ├─ index.js                    # Express API (/health, /chat)
-│  ├─ lexClient.js                # Lex Runtime V2 RecognizeText 호출 래퍼
+│  ├─ index.js                    # [AWS] Express API (/health, /chat)
+│  ├─ lexClient.js                # [AWS] Lex Runtime V2 RecognizeText 래퍼
 │  └─ package.json
+├─ azure/
+│  ├─ README.md                   # [Azure] Azure CLU + Functions 설정 가이드
+│  ├─ server/
+│  │  ├─ index.js                 # [Azure] Express API (포트 3100)
+│  │  ├─ azureClient.js           # [Azure] CLU analyzeConversation 래퍼
+│  │  └─ package.json
+│  └─ functions/
+│     └─ fulfillment.js           # [Azure] Azure Functions + 인텐트 처리 로직
+├─ ollama/
+│  ├─ README.md                   # [온프렘] Ollama 설정 가이드
+│  └─ server/
+│     ├─ index.js                 # [온프렘] Express API (포트 3200)
+│     ├─ ollamaClient.js          # [온프렘] Ollama /api/chat 래퍼
+│     └─ package.json
 ├─ infra/
 │  ├─ README.md                   # Lex 자동 생성 스크립트 사용법
 │  ├─ config.example.env          # 자동 생성용 환경 변수 템플릿
@@ -383,6 +409,126 @@ Lex Alias에 Fulfillment 코드훅으로 연결합니다.
 - 기본 로케일은 `ko_KR` 기준이며, 다국어 확장 시 로케일별 모델 분리를 권장합니다.
 - Alias 기반(DEV/PROD) 배포 전략을 사용하면 안정적인 변경 반영이 가능합니다.
 - Lambda/Express 로그를 CloudWatch 및 콘솔 로그로 함께 추적하면 문제 분석이 쉽습니다.
+
+---
+
+## 11) MS Azure 기반 구현
+
+동일한 학원 예약/상담 도메인을 **Microsoft Azure** 서비스로 구현한 버전입니다.
+
+### Azure 아키텍처 요약
+
+```mermaid
+flowchart TD
+    A[사용자] -->|POST /chat| B[Express API\nazure/server/index.js]
+    B --> C[Azure CLU\nazureClient.js]
+    C --> D[Azure Language Service\nCLU 프로젝트]
+    D --> E[인텐트/엔티티 응답]
+    E --> F[Fulfillment 처리\nazure/functions/fulfillment.js]
+    F --> G[클라이언트 응답]
+```
+
+### AWS vs Azure 서비스 대응
+
+| AWS | Azure |
+|---|---|
+| Amazon Lex V2 | Azure Language Service — CLU |
+| AWS Lambda | Azure Functions (Node.js v4) |
+| AWS CloudWatch | Azure Monitor / Application Insights |
+| AWS IAM | Azure Managed Identity / RBAC |
+
+### Azure 빠른 시작
+
+```bash
+# 환경변수 설정
+export AZURE_LANGUAGE_ENDPOINT="https://<your-resource>.cognitiveservices.azure.com"
+export AZURE_LANGUAGE_KEY="<Key1>"
+export AZURE_CLU_PROJECT="AcademyBot"
+export AZURE_CLU_DEPLOYMENT="production"
+
+# 의존성 설치 및 서버 실행 (포트 3100)
+cd azure/server && npm install && node index.js
+```
+
+### Azure 관련 파일
+
+```text
+azure/
+├─ README.md                     # Azure 상세 설정 가이드
+├─ server/
+│  ├─ index.js                   # Express API (포트 3100)
+│  ├─ azureClient.js             # Azure CLU analyzeConversation 래퍼
+│  └─ package.json
+└─ functions/
+   └─ fulfillment.js             # Azure Functions + 인텐트 처리 로직
+docs/
+└─ azure-design.md               # Azure CLU 인텐트/엔티티 설계표
+```
+
+> 상세 내용은 [`azure/README.md`](azure/README.md) 및 [`docs/azure-design.md`](docs/azure-design.md) 참고
+
+---
+
+## 12) Ollama 온프렘(On-Premises) LLM 구현
+
+**Ollama**를 사용해 클라우드 API 없이 로컬/온프렘 환경에서 동일한 챗봇을 구현합니다.  
+인터넷 차단 환경, 데이터 보안이 중요한 환경에 적합합니다.
+
+### Ollama 아키텍처 요약
+
+```mermaid
+flowchart TD
+    A[사용자] -->|POST /chat| B[Express API\nollama/server/index.js]
+    B --> C[세션 이력 관리]
+    C --> D[Ollama REST API\nollamaClient.js]
+    D --> E[Ollama 데몬\nlocalhost:11434]
+    E --> F[로컬 LLM\nexaone3.5 / qwen2.5 등]
+    F --> G[자연어 응답 반환]
+```
+
+### 세 플랫폼 비교
+
+| 항목 | AWS Lex V2 | Azure CLU | Ollama (온프렘) |
+|---|---|---|---|
+| 인터넷 필요 | O | O | X |
+| 데이터 외부 전송 | O | O | X (완전 로컬) |
+| 비용 모델 | 요청 수 과금 | 요청 수 과금 | 서버 비용 고정 |
+| NLU 방식 | 인텐트/슬롯 | 인텐트/엔티티 | LLM 자연어 이해 |
+| 학습 필요 | O | O | X (프롬프트만) |
+
+### Ollama 빠른 시작
+
+```bash
+# 1. Ollama 설치 (Linux)
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# 2. 모델 다운로드 (한국어 지원)
+ollama pull exaone3.5      # LG AI Research 한국어 특화 (권장)
+ollama pull qwen2.5        # 다국어 지원
+
+# 3. Ollama 서버 시작
+ollama serve
+
+# 4. Express 서버 실행 (포트 3200)
+cd ollama/server && npm install
+export OLLAMA_MODEL=exaone3.5
+node index.js
+```
+
+### Ollama 관련 파일
+
+```text
+ollama/
+├─ README.md                     # Ollama 상세 설정 가이드
+└─ server/
+   ├─ index.js                   # Express API (포트 3200)
+   ├─ ollamaClient.js            # Ollama /api/chat 래퍼
+   └─ package.json
+```
+
+> 상세 내용은 [`ollama/README.md`](ollama/README.md) 참고
+
+---
 
 ### AWS Infra Architecture
 
