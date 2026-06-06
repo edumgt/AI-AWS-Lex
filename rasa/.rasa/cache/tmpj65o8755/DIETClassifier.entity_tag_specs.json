@@ -1,0 +1,52 @@
+[
+  {
+    "tag_name": "entity",
+    "ids_to_tags": {
+      "1": "B-branch",
+      "2": "I-branch",
+      "3": "L-branch",
+      "4": "U-branch",
+      "5": "B-date",
+      "6": "I-date",
+      "7": "L-date",
+      "8": "U-date",
+      "9": "B-name",
+      "10": "I-name",
+      "11": "L-name",
+      "12": "U-name",
+      "13": "B-phone",
+      "14": "I-phone",
+      "15": "L-phone",
+      "16": "U-phone",
+      "17": "B-time",
+      "18": "I-time",
+      "19": "L-time",
+      "20": "U-time",
+      "0": "O"
+    },
+    "tags_to_ids": {
+      "B-branch": 1,
+      "I-branch": 2,
+      "L-branch": 3,
+      "U-branch": 4,
+      "B-date": 5,
+      "I-date": 6,
+      "L-date": 7,
+      "U-date": 8,
+      "B-name": 9,
+      "I-name": 10,
+      "L-name": 11,
+      "U-name": 12,
+      "B-phone": 13,
+      "I-phone": 14,
+      "L-phone": 15,
+      "U-phone": 16,
+      "B-time": 17,
+      "I-time": 18,
+      "L-time": 19,
+      "U-time": 20,
+      "O": 0
+    },
+    "num_tags": 21
+  }
+]

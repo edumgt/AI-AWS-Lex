@@ -1,0 +1,13 @@
+# Rasa 커스텀 액션 서버 이미지
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY actions/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY actions/ ./actions/
+
+EXPOSE 5055
+
+CMD ["python", "-m", "rasa_sdk", "--actions", "actions", "--port", "5055"]

@@ -1,0 +1,87 @@
+{
+  "type": "MaxHistoryTrackerFeaturizer",
+  "state_featurizer": {
+    "action_texts": [],
+    "entity_tag_specs": [],
+    "feature_states": {
+      "intent": {
+        "affirm": 0,
+        "ask_branch_info": 1,
+        "ask_course_info": 2,
+        "back": 3,
+        "cancel_reservation": 4,
+        "check_reservation": 5,
+        "deny": 6,
+        "goodbye": 7,
+        "greet": 8,
+        "make_reservation": 9,
+        "nlu_fallback": 10,
+        "out_of_scope": 11,
+        "provide_branch": 12,
+        "provide_course": 13,
+        "provide_date": 14,
+        "provide_name": 15,
+        "provide_phone": 16,
+        "provide_time": 17,
+        "restart": 18,
+        "session_start": 19
+      },
+      "action_name": {
+        "action_listen": 0,
+        "action_restart": 1,
+        "action_session_start": 2,
+        "action_default_fallback": 3,
+        "action_deactivate_loop": 4,
+        "action_revert_fallback_events": 5,
+        "action_default_ask_affirmation": 6,
+        "action_default_ask_rephrase": 7,
+        "action_two_stage_fallback": 8,
+        "action_unlikely_intent": 9,
+        "action_back": 10,
+        "...": 11,
+        "action_extract_slots": 12,
+        "action_complete_reservation": 13,
+        "action_check_reservation": 14,
+        "action_cancel_reservation": 15,
+        "validate_reservation_form": 16,
+        "utter_affirm": 17,
+        "utter_ask_branch": 18,
+        "utter_ask_course": 19,
+        "utter_ask_date": 20,
+        "utter_ask_name": 21,
+        "utter_ask_phone": 22,
+        "utter_ask_reservation_id": 23,
+        "utter_ask_time": 24,
+        "utter_branch_info": 25,
+        "utter_course_info": 26,
+        "utter_default": 27,
+        "utter_goodbye": 28,
+        "utter_greet": 29,
+        "utter_out_of_scope": 30,
+        "reservation_form": 31
+      },
+      "entities": {
+        "branch": 0,
+        "course": 1,
+        "date": 2,
+        "name": 3,
+        "phone": 4,
+        "reservation_id": 5,
+        "time": 6
+      },
+      "slots": {
+        "branch_0": 0,
+        "course_0": 1,
+        "date_0": 2,
+        "time_0": 3,
+        "name_0": 4,
+        "phone_0": 5
+      },
+      "active_loop": {
+        "reservation_form": 0
+      }
+    }
+  },
+  "remove_duplicates": true,
+  "max_history": 5
+}

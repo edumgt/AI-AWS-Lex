@@ -1,0 +1,60 @@
+version: "3.1"
+
+stories:
+
+  - story: 인사 후 예약 흐름
+    steps:
+      - intent: greet
+      - action: utter_greet
+      - intent: make_reservation
+      - action: reservation_form
+      - active_loop: reservation_form
+      - active_loop: null
+      - action: action_complete_reservation
+
+  - story: 지점 포함 예약 흐름
+    steps:
+      - intent: make_reservation
+        entities:
+          - branch: 강남점
+      - action: reservation_form
+      - active_loop: reservation_form
+      - active_loop: null
+      - action: action_complete_reservation
+
+  - story: 과정 정보 조회 후 예약
+    steps:
+      - intent: ask_course_info
+      - action: utter_course_info
+      - intent: make_reservation
+      - action: reservation_form
+      - active_loop: reservation_form
+      - active_loop: null
+      - action: action_complete_reservation
+
+  - story: 지점 정보 조회 후 예약
+    steps:
+      - intent: ask_branch_info
+      - action: utter_branch_info
+      - intent: make_reservation
+      - action: reservation_form
+      - active_loop: reservation_form
+      - active_loop: null
+      - action: action_complete_reservation
+
+  - story: 예약 확인 후 취소
+    steps:
+      - intent: check_reservation
+      - action: action_check_reservation
+      - intent: cancel_reservation
+      - action: action_cancel_reservation
+
+  - story: 예약 후 작별 인사
+    steps:
+      - intent: make_reservation
+      - action: reservation_form
+      - active_loop: reservation_form
+      - active_loop: null
+      - action: action_complete_reservation
+      - intent: goodbye
+      - action: utter_goodbye

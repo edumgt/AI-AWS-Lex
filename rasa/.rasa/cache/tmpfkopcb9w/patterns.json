@@ -1,0 +1,14 @@
+[
+  {
+    "name": "date",
+    "pattern": "\\d{4}-\\d{2}-\\d{2}"
+  },
+  {
+    "name": "phone",
+    "pattern": "010-\\d{4}-\\d{4}"
+  },
+  {
+    "name": "phone",
+    "pattern": "010\\d{8}"
+  }
+]

@@ -1,6 +1,6 @@
 # Amazon Lex V2 + Node.js 실습 패키지 (학원 예약/상담 도메인)
 
-![alt text](image-1.png)
+![홈페이지 미리보기](docs/assets/reservation-reminder.png)
 
 ## 오늘 예약 리마인더 모달
 
@@ -174,43 +174,71 @@
 
 ```text
 .
-├─ README.md                      # 프로젝트 전체 가이드(이 문서)
+├─ README.md
 ├─ docs/
+│  ├─ assets/                     # 이미지·다이어그램 (README 참조용)
 │  ├─ lex-design.md               # [AWS] 인텐트/슬롯 설계표 + 콘솔 체크리스트
 │  ├─ azure-design.md             # [Azure] CLU 인텐트/엔티티 설계표
 │  └─ utterances-100.md           # Intent별 샘플 발화 100개 (AWS/Azure 공용)
+│
+├─ lex-chat-ux/                   # 프론트엔드 + 통합 API 서버 (메인 실행 패키지)
+│  ├─ src/                        # Quasar/Vue 3 SPA
+│  ├─ public/                     # 순수 HTML/JS 경량 UI (대안 프론트엔드)
+│  ├─ server/                     # Express 통합 서버 (포트 3000, npm run dev로 실행)
+│  │  ├─ index.js                 # 엔진 라우터 (/api/chat, /api/engines)
+│  │  ├─ lexClient.js             # AWS Lex Runtime V2 래퍼
+│  │  ├─ lexFormatter.js          # Lex 응답 → UX 포맷 변환
+│  │  ├─ onpremClient.js          # 온프렘 엔진 (Ollama, Rasa, Azure CLU) 라우팅
+│  │  ├─ reservationFlow.js       # 직접 예약 흐름 처리 (슬롯 수집)
+│  │  ├─ suggestions.js           # 슬롯 자동완성 목록
+│  │  └─ lambdaClient.js          # AWS Lambda 직접 호출 (옵션)
+│  ├─ shared/
+│  │  └─ campusLocations.json     # 캠퍼스 위치 데이터 (서버+프론트 공유)
+│  ├─ screenshots/                # UI 스크린샷
+│  └─ package.json                # 전체 의존성 (Quasar + Express + AWS SDK)
+│
+├─ server/                        # 경량 단독 서버 (Lex + 다중 엔진 라우터)
+│  ├─ index.js                    # /health, /engines, /chat (엔진 프록시 포함)
+│  ├─ lexClient.js                # AWS Lex Runtime V2 래퍼
+│  └─ package.json
+│
+├─ azure/                         # [Azure CLU] 챗봇 구현
+│  ├─ README.md
+│  ├─ server/                     # Express API (포트 3100)
+│  └─ functions/                  # Azure Functions 핸들러
+│
+├─ ollama/                        # [Ollama 온프렘 LLM] 챗봇 구현
+│  ├─ README.md
+│  └─ server/                     # Express API (포트 3200)
+│
+├─ rasa/                          # [Rasa ML NLU] 챗봇 구현
+│  ├─ README.md
+│  ├─ config.yml                  # NLU 파이프라인 (DIETClassifier + char n-gram)
+│  ├─ domain.yml                  # 인텐트·슬롯·응답·폼 정의
+│  ├─ data/                       # 한국어 학습 데이터 (nlu/stories/rules)
+│  ├─ actions/                    # Python 커스텀 액션 (예약 처리)
+│  ├─ docker-compose.yml          # Rasa + Actions + Node 어댑터 일괄 실행
+│  └─ server/                     # Node.js 어댑터 (포트 3300)
+│
 ├─ lambda/
 │  └─ fulfillment.js              # [AWS] Lex Fulfillment Lambda 핸들러
-├─ server/
-│  ├─ index.js                    # [AWS] Express API (/health, /chat)
-│  ├─ lexClient.js                # [AWS] Lex Runtime V2 RecognizeText 래퍼
-│  └─ package.json
-├─ azure/
-│  ├─ README.md                   # [Azure] Azure CLU + Functions 설정 가이드
-│  ├─ server/
-│  │  ├─ index.js                 # [Azure] Express API (포트 3100)
-│  │  ├─ azureClient.js           # [Azure] CLU analyzeConversation 래퍼
-│  │  └─ package.json
-│  └─ functions/
-│     └─ fulfillment.js           # [Azure] Azure Functions + 인텐트 처리 로직
-├─ ollama/
-│  ├─ README.md                   # [온프렘] Ollama 설정 가이드
-│  └─ server/
-│     ├─ index.js                 # [온프렘] Express API (포트 3200)
-│     ├─ ollamaClient.js          # [온프렘] Ollama /api/chat 래퍼
-│     └─ package.json
+│
 ├─ infra/
-│  ├─ README.md                   # Lex 자동 생성 스크립트 사용법
-│  ├─ config.example.env          # 자동 생성용 환경 변수 템플릿
-│  ├─ lex-bootstrap.sh            # AWS CLI 기반 자동 생성 스크립트(bash)
-│  ├─ lex-bootstrap.py            # AWS CLI 기반 자동 생성 스크립트(Python)
-│  └─ lex-bootstrap.js            # AWS SDK 기반 자동 생성 스크립트
+│  ├─ README.md
+│  ├─ lex-bootstrap.sh / .py / .js  # Lex 봇 자동 생성 스크립트
+│  ├─ apigwinstall.sh             # API Gateway + Lambda 일괄 생성 스크립트
+│  └─ config.example.env
+│
 ├─ scripts/
 │  └─ seed-testcases.json         # 테스트 발화/기대 인텐트 시드
+│
 └─ postman/
    ├─ Lex-Lab.postman_collection.json
    └─ Lex-Lab.postman_environment.json
 ```
+
+> **실행 진입점**: `cd lex-chat-ux && npm run dev`  
+> 프론트엔드(Quasar, :9000)와 API 서버(:3000)가 동시에 시작됩니다.
 
 ---
 
@@ -532,7 +560,7 @@ ollama/
 
 ### AWS Infra Architecture
 
-![](./sample.png)
+![AWS 인프라 아키텍처](./docs/assets/aws-infra.png)
 
 ## API GW 기초 부터 붙여보기
 ```
@@ -702,5 +730,5 @@ aws apigatewayv2 create-route \
 ```
 apigwinstall.sh 실행
 ```
-![](./apigwinstall.png)
+![API GW 일괄 생성](./docs/assets/apigwinstall.png)
 

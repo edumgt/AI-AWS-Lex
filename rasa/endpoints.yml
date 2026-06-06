@@ -1,0 +1,2 @@
+action_endpoint:
+  url: "http://app-actions:5055/webhook"

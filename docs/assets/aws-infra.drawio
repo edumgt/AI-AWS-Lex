@@ -1,0 +1,137 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0" version="29.5.2">
+  <diagram id="aws-practical-arch" name="Page-1">
+    <mxGraphModel dx="1489" dy="1591" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- User -->
+        <mxCell id="user1" value="User"
+          style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;fontColor=#232F3E;"
+          vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="40" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- AWS Cloud Boundary -->
+        <mxCell id="awsBoundary" value="AWS Cloud"
+          style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#232F3E;fillColor=none;fontStyle=1;align=left;verticalAlign=top;spacingTop=8;spacingLeft=10;fontSize=14;"
+          vertex="1" parent="1">
+          <mxGeometry x="120" y="80" width="980" height="430" as="geometry" />
+        </mxCell>
+
+        <!-- Routing note -->
+        <mxCell id="note1"
+          value="Routing&#xa;• Static UI → S3 Frontend Bucket&#xa;• /api/* → API Gateway"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#232F3E;fontSize=11;"
+          vertex="1" parent="1">
+          <mxGeometry x="565" y="110" width="250" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- CloudFront -->
+        <mxCell id="cloudfront1" value="Amazon&#xa;CloudFront"
+          style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudfront;labelBackgroundColor=#ffffff;"
+          vertex="1" parent="1">
+          <mxGeometry x="220" y="250" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- S3 Frontend -->
+        <mxCell id="s3frontend1" value="Amazon S3&#xa;Frontend Bucket"
+          style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.bucket;labelBackgroundColor=#ffffff;"
+          vertex="1" parent="1">
+          <mxGeometry x="430" y="130" width="75" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway -->
+        <mxCell id="apigw1" value="Amazon API&#xa;Gateway"
+          style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#DD344C;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;labelBackgroundColor=#ffffff;"
+          vertex="1" parent="1">
+          <mxGeometry x="430" y="250" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Lambda -->
+        <mxCell id="lambda1" value="AWS&#xa;Lambda"
+          style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;labelBackgroundColor=#ffffff;"
+          vertex="1" parent="1">
+          <mxGeometry x="640" y="250" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Amazon Lex -->
+        <mxCell id="lex1" value="Amazon&#xa;Lex"
+          style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#2E73B8;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lex;labelBackgroundColor=#ffffff;"
+          vertex="1" parent="1">
+          <mxGeometry x="850" y="250" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- S3 Data -->
+        <mxCell id="s3data1" value="Amazon S3&#xa;Data Bucket"
+          style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.bucket;labelBackgroundColor=#ffffff;"
+          vertex="1" parent="1">
+          <mxGeometry x="850" y="390" width="75" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- User -> CloudFront -->
+        <mxCell id="e1" value="HTTPS"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=open;endFill=0;strokeColor=#808080;strokeWidth=2;"
+          edge="1" parent="1" source="user1" target="cloudfront1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CloudFront -> S3 Frontend -->
+        <mxCell id="e2" value="Static Content"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=open;endFill=0;strokeColor=#808080;strokeWidth=2;"
+          edge="1" parent="1" source="cloudfront1" target="s3frontend1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- CloudFront -> API Gateway -->
+        <mxCell id="e3" value="/api Request"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=open;endFill=0;strokeColor=#808080;strokeWidth=2;"
+          edge="1" parent="1" source="cloudfront1" target="apigw1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway -> Lambda -->
+        <mxCell id="e4" value="Invoke"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=open;endFill=0;strokeColor=#808080;strokeWidth=2;"
+          edge="1" parent="1" source="apigw1" target="lambda1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Lambda -> Lex -->
+        <mxCell id="e5" value="Process Utterance"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=open;endFill=0;strokeColor=#808080;strokeWidth=2;"
+          edge="1" parent="1" source="lambda1" target="lex1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Lex -> Lambda -->
+        <mxCell id="e6" value="Intent / Response"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=open;endFill=0;strokeColor=#4D72F3;strokeWidth=2;dashed=1;"
+          edge="1" parent="1" source="lex1" target="lambda1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="889" y="355" />
+              <mxPoint x="679" y="355" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Lambda -> S3 Data -->
+        <mxCell id="e7" value="Store Logs / Results"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;startFill=0;endArrow=open;endFill=0;strokeColor=#808080;strokeWidth=2;"
+          edge="1" parent="1" source="lambda1" target="s3data1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="679" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

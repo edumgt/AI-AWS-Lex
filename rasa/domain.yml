@@ -1,0 +1,129 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - make_reservation
+  - check_reservation
+  - cancel_reservation
+  - ask_course_info
+  - ask_branch_info
+  - provide_branch
+  - provide_course
+  - provide_date
+  - provide_time
+  - provide_name
+  - provide_phone
+  - out_of_scope
+
+entities:
+  - branch
+  - course
+  - date
+  - time
+  - name
+  - phone
+  - reservation_id
+
+slots:
+  branch:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: branch
+  course:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: course
+  date:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: date
+  time:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: time
+  name:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: name
+  phone:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: phone
+
+forms:
+  reservation_form:
+    required_slots:
+      - branch
+      - course
+      - date
+      - time
+      - name
+      - phone
+
+responses:
+  utter_greet:
+    - text: "안녕하세요! 어학원 상담 챗봇입니다. 무엇을 도와드릴까요?\n예) \"강남점 토익 예약하고 싶어요\""
+
+  utter_goodbye:
+    - text: "감사합니다! 좋은 하루 되세요. 또 궁금하신 점이 있으면 언제든지 말씀해 주세요."
+
+  utter_affirm:
+    - text: "네, 알겠습니다!"
+
+  utter_ask_branch:
+    - text: "어느 지점을 원하시나요?\n• 강남점  • 홍대점  • 잠실점  • 분당점  • 인천점"
+
+  utter_ask_course:
+    - text: "어떤 과정을 수강하시겠어요?\n• 토익  • 오픽  • 영어회화  • 일본어  • 자격증"
+
+  utter_ask_date:
+    - text: "수강 시작일을 알려주세요. (예: 2026-07-15)"
+
+  utter_ask_time:
+    - text: "원하시는 수업 시간대를 알려주세요. (예: 19:30)"
+
+  utter_ask_name:
+    - text: "예약자 성함을 알려주세요."
+
+  utter_ask_phone:
+    - text: "연락처를 알려주세요. (예: 010-1234-5678)"
+
+  utter_ask_reservation_id:
+    - text: "예약번호 또는 성함을 알려주세요."
+
+  utter_course_info:
+    - text: "과정 안내입니다:\n\n• 토익 집중반 — 월 350,000원 / 주 5회 / 2개월\n• 오픽 준비반 — 월 320,000원 / 주 3회 / 2개월\n• 영어회화반 — 월 280,000원 / 주 3회 / 3개월\n• 일본어반 — 월 260,000원 / 주 3회 / 3개월\n• 자격증반 — 월 300,000원 / 주 4회 / 2개월\n\n자세한 상담은 예약을 진행해 주세요!"
+
+  utter_branch_info:
+    - text: "지점 안내입니다:\n\n• 강남점 — 서울 강남구 테헤란로 (지하철 2호선 강남역 3번 출구)\n• 홍대점 — 서울 마포구 와우산로 (지하철 2호선 홍대입구역 9번 출구)\n• 잠실점 — 서울 송파구 올림픽로 (지하철 2호선 잠실역 1번 출구)\n• 분당점 — 경기 성남시 분당구 정자동 (분당선 정자역 4번 출구)\n• 인천점 — 인천 남동구 구월동 (인천 1호선 예술회관역 3번 출구)"
+
+  utter_default:
+    - text: "죄송합니다, 무슨 말씀인지 잘 이해하지 못했어요.\n수강 예약, 예약 확인, 과정 안내, 지점 안내 중 어떤 도움이 필요하신가요?"
+
+  utter_out_of_scope:
+    - text: "저는 어학원 예약 및 상담 전용 챗봇입니다. 수강 신청이나 예약 관련 질문을 해주세요."
+
+actions:
+  - action_complete_reservation
+  - action_check_reservation
+  - action_cancel_reservation
+  - validate_reservation_form
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: false

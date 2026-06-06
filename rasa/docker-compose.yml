@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  # -------------------------------------------------------
+  # Rasa 챗봇 서버 (NLU + Core)
+  # -------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rasa-chatbot:latest
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./models:/app/models        # 학습된 모델 마운트
+      - ./config.yml:/app/config.yml
+      - ./domain.yml:/app/domain.yml
+      - ./endpoints.yml:/app/endpoints.yml
+      - ./credentials.yml:/app/credentials.yml
+      - ./data:/app/data
+    environment:
+      - RASA_TELEMETRY_ENABLED=false
+    depends_on:
+      - app-actions
+    networks:
+      - rasa-net
+    command: >
+      run
+      --enable-api
+      --cors "*"
+      --endpoints /app/endpoints.yml
+      --credentials /app/credentials.yml
+
+  # -------------------------------------------------------
+  # Rasa 커스텀 액션 서버 (Python)
+  # -------------------------------------------------------
+  app-actions:
+    build:
+      context: .
+      dockerfile: Dockerfile.actions
+    image: rasa-actions:latest
+    ports:
+      - "5055:5055"
+    volumes:
+      - ./actions:/app/actions
+    networks:
+      - rasa-net
+
+  # -------------------------------------------------------
+  # Rasa 어댑터 서버 (Node.js, 포트 3300)
+  # 프론트엔드 ← server/index.js(3000) ← 이 서버(3300) ← Rasa(5005)
+  # -------------------------------------------------------
+  rasa-adapter:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "3300:3300"
+    volumes:
+      - ./server:/app
+    environment:
+      - RASA_BASE_URL=http://app:5005
+      - PORT=3300
+    depends_on:
+      - app
+    networks:
+      - rasa-net
+    command: sh -c "npm install && node index.js"
+
+networks:
+  rasa-net:
+    driver: bridge
