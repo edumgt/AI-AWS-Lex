@@ -9,8 +9,8 @@
                @click="leftOpen = !leftOpen" />
 
         <div class="gem-logo q-ml-xs">
-          <q-icon name="school" size="20px" color="primary" />
-          <span class="gem-logo-text">학원 AI 상담</span>
+          <q-icon name="show_chart" size="20px" color="primary" />
+          <span class="gem-logo-text">KF증권 AI 투자상담</span>
         </div>
 
         <q-space />
@@ -29,7 +29,7 @@
         <q-btn flat round dense icon="info_outline"
                class="gem-icon-btn"
                @click="rightOpen = !rightOpen">
-          <q-tooltip anchor="bottom middle" self="top middle">예약 현황 &amp; 설정</q-tooltip>
+          <q-tooltip anchor="bottom middle" self="top middle">상담 예약 현황 &amp; 설정</q-tooltip>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -106,7 +106,7 @@
       <div class="q-pa-md">
 
         <template v-if="summaryItems.length > 0">
-          <div class="gem-panel-title q-mb-sm">예약 진행 현황</div>
+          <div class="gem-panel-title q-mb-sm">상담 예약 현황</div>
           <div class="summary-grid">
             <div v-for="item in summaryItems" :key="item.key" class="summary-row">
               <span class="summary-key">{{ item.label }}</span>
@@ -120,7 +120,7 @@
           <q-separator class="gem-sep q-my-md" />
         </template>
 
-        <div class="gem-panel-title q-mb-sm">캠퍼스 선택</div>
+        <div class="gem-panel-title q-mb-sm">지점 선택</div>
         <CampusMapPicker
           compact
           :selected-branch="selectedBranch"
@@ -153,7 +153,8 @@
               <q-icon name="auto_awesome" size="52px" color="primary" />
             </div>
             <h1 class="welcome-title">무엇을 도와드릴까요?</h1>
-            <p class="welcome-sub">학원 수강 상담, 예약, 정보를 자유롭게 물어보세요</p>
+            <p class="welcome-sub">투자상담 예약, 금융상품 안내, 예약 조회를 자유롭게 물어보세요</p>
+            <p class="welcome-disclaimer">※ 투자는 원금 손실이 발생할 수 있으며, 투자 결정은 고객 본인의 판단과 책임 하에 이루어집니다.</p>
             <div class="suggestion-row q-mt-xl">
               <q-btn
                 v-for="s in suggestions" :key="s"
@@ -175,7 +176,7 @@
                   <q-icon name="auto_awesome" size="16px" color="primary" />
                 </div>
                 <div class="bot-body">
-                  <div class="bot-name-label">학원 AI</div>
+                  <div class="bot-name-label">KF증권 AI</div>
                   <div class="bot-text whitespace-pre-wrap">{{ msg.text }}</div>
                   <div v-if="msg.meta" class="msg-meta">{{ msg.meta }}</div>
                 </div>
@@ -191,7 +192,7 @@
                 <q-icon name="auto_awesome" size="16px" color="primary" />
               </div>
               <div class="bot-body">
-                <div class="bot-name-label">학원 AI</div>
+                <div class="bot-name-label">KF증권 AI</div>
                 <div class="typing-dots">
                   <span class="tdot"></span>
                   <span class="tdot"></span>
@@ -248,7 +249,7 @@
               @click="sendMessage"
             />
           </div>
-          <div class="input-footer-text">학원명 AI 상담 · 내용이 부정확할 수 있습니다</div>
+          <div class="input-footer-text">KF증권 AI 투자상담 · 투자 결과는 고객 본인의 판단과 책임 하에 이루어집니다</div>
         </div>
 
       </q-page>
@@ -260,7 +261,7 @@
       <q-card class="reminder-card">
         <q-card-section class="reminder-header">
           <div class="text-overline" style="color: #059669;">Today Reminder</div>
-          <div class="text-h6 text-weight-bold" style="color: #065f46;">오늘 예약 일정이 있어요</div>
+          <div class="text-h6 text-weight-bold" style="color: #065f46;">오늘 투자상담 일정이 있어요</div>
         </q-card-section>
         <q-card-section class="q-pa-lg">
           <p class="text-body2 text-grey-8 q-mb-md">{{ reminderMessage }}</p>
@@ -279,7 +280,7 @@
         </q-card-section>
         <q-card-actions align="right" class="q-pa-md q-pt-none">
           <q-btn flat label="나중에 보기" color="grey-6" @click="dismissReminder" />
-          <q-btn unelevated rounded label="예약 확인하기" color="primary" @click="openReminderChat" />
+          <q-btn unelevated rounded label="상담 예약 확인하기" color="primary" @click="openReminderChat" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -355,10 +356,10 @@ const onEngineChange = () => {
 
 // ── Navigation ──
 const navItems = [
-  { icon: 'menu_book',       label: '과정 안내',  prompt: '어떤 과정들이 있나요?' },
-  { icon: 'event_available', label: '수강신청',   prompt: '수강 신청하고 싶어요' },
-  { icon: 'apartment',       label: '학원소개',   prompt: '학원을 소개해주세요' },
-  { icon: 'place',           label: '오시는길',   prompt: '캠퍼스 위치가 어디인가요?' },
+  { icon: 'show_chart',      label: '투자상담 예약', prompt: '투자상담 예약하고 싶어요' },
+  { icon: 'account_balance', label: '금융상품 안내', prompt: '어떤 금융상품이 있나요?' },
+  { icon: 'search',          label: '예약 조회',    prompt: '상담 예약 조회해줘' },
+  { icon: 'place',           label: '지점 안내',    prompt: '지점 위치가 어디인가요?' },
 ];
 
 const handleNavClick = (nav) => {
@@ -368,10 +369,10 @@ const handleNavClick = (nav) => {
 
 // ── Suggestions ──
 const suggestions = [
-  '토익 수강 예약하기',
-  '영어회화 과정 알려줘',
-  '예약 확인하고 싶어요',
-  '캠퍼스 위치 알려줘',
+  '여의도지점 ETF 상담 예약하기',
+  'ISA 계좌 혜택 알려줘',
+  '투자상담 예약 확인하고 싶어요',
+  '연금저축 세액공제 얼마야?',
 ];
 
 // ── Scroll ──
@@ -461,17 +462,17 @@ const reminderSummary = computed(() => {
   if (!todayReservation.value) return [];
   const r = todayReservation.value;
   return [
-    { label: '예약 지점', value: r.Branch || '-' },
-    { label: '과정',     value: r.CourseName || '-' },
-    { label: '시간',     value: `${r.Date || '-'} ${r.Time || ''}`.trim() },
-    { label: '예약자',   value: r.StudentName || '-' }
+    { label: '상담 지점', value: r.Branch || '-' },
+    { label: '상품',      value: r.ProductType || '-' },
+    { label: '일시',      value: `${r.Date || '-'} ${r.Time || ''}`.trim() },
+    { label: '고객명',    value: r.CustomerName || '-' }
   ];
 });
 
 const reminderMessage = computed(() => {
   if (!todayReservation.value) return '';
   const r = todayReservation.value;
-  return `${r.StudentName || '예약자'}님, 오늘 ${r.Time || ''} ${r.Branch || ''} ${r.CourseName || ''} 예약이 예정되어 있습니다.`;
+  return `${r.CustomerName || '고객'}님, 오늘 ${r.Time || ''} ${r.Branch || ''} ${r.ProductType || ''} 투자상담이 예정되어 있습니다.`;
 });
 
 const dismissReminder = () => {
@@ -483,7 +484,7 @@ const dismissReminder = () => {
 const openReminderChat = () => {
   reminderOpen.value = false;
   const b = todayReservation.value?.Branch;
-  sendSuggestion(b ? `${b} 예약 확인해줘` : '예약 확인해줘');
+  sendSuggestion(b ? `${b} 상담 예약 확인해줘` : '상담 예약 확인해줘');
 };
 
 // ── Mount ──
@@ -511,7 +512,7 @@ onMounted(() => {
     const stored = localStorage.getItem('lex_chat_ux_v3_state');
     if (stored) {
       const parsed = JSON.parse(stored);
-      const r = parsed?.lastReservation?.fields;
+      const r = parsed?.lastConsultation?.fields;
       if (r?.Date === todayKey && localStorage.getItem(reminderDismissedKey.value) !== '1') {
         todayReservation.value = r;
         reminderOpen.value = true;
@@ -603,6 +604,7 @@ onMounted(() => {
   margin: 0 0 8px; letter-spacing: -0.5px;
 }
 .welcome-sub { font-size: 15px; color: #5f6368; margin: 0; }
+.welcome-disclaimer { font-size: 11px; color: #9aa0a6; margin: 8px 0 0; max-width: 520px; }
 .suggestion-row {
   display: flex; flex-wrap: wrap; justify-content: center;
   gap: 8px; max-width: 640px;

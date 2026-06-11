@@ -15,8 +15,8 @@
           <div class="flex items-center">
             <q-avatar size="40px" color="white" text-color="primary" icon="smart_toy" />
             <div class="ml-3">
-              <div class="font-bold text-lg">학원 상담 챗봇</div>
-              <div class="text-xs opacity-90">무엇을 도와드릴까요?</div>
+              <div class="font-bold text-lg">KF증권 투자상담 챗봇</div>
+              <div class="text-xs opacity-90">투자상담 예약 및 금융상품 안내</div>
             </div>
           </div>
           
@@ -85,7 +85,7 @@
         v-if="summaryItems.length > 0" 
         class="bg-blue-50 py-3 border-b"
       >
-        <div class="text-sm font-semibold text-gray-700 mb-2">예약 정보</div>
+        <div class="text-sm font-semibold text-gray-700 mb-2">상담 예약 정보</div>
         <div class="flex flex-wrap gap-2">
           <q-chip
             v-for="item in summaryItems"
@@ -274,7 +274,7 @@ watch(dialogOpen, (newVal) => {
   if (newVal) {
     chatStore.loadEngines();
     if (messages.value.length === 0) {
-      addBotMessage('안녕하세요! 무엇을 도와드릴까요?\n예) "강남점 토익 예약하고 싶어요"');
+      addBotMessage('안녕하세요! KF증권 AI 투자상담입니다.\n예) "여의도지점 ETF 투자상담 예약하고 싶어요"');
     }
     consumeBranchPrefill();
   }
@@ -367,7 +367,7 @@ const startNewSession = async () => {
     persistent: false
   }).onOk(() => {
     chatStore.resetSession();
-    addBotMessage('새 세션을 시작했어요. 예) "강남점 토익 예약하고 싶어요"');
+    addBotMessage('새 세션을 시작했어요. 예) "여의도지점 ETF 투자상담 예약하고 싶어요"');
   });
 };
 </script>

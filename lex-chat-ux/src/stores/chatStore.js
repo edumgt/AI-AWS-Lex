@@ -14,7 +14,7 @@ export const useChatStore = defineStore('chat', {
     messages: [],
     sessionId: '',
     summaryItems: [],
-    lastReservation: null,
+    lastConsultation: null,
     quickReplies: [],
     selectedEngine: 'aws-lex',
     availableEngines: [],
@@ -85,8 +85,8 @@ export const useChatStore = defineStore('chat', {
           this.summaryItems = data.summary;
         }
 
-        if (data.intent === 'MakeReservation' && data.state === 'Fulfilled' && Array.isArray(data.summary)) {
-          this.lastReservation = {
+        if (data.intent === 'BookConsultation' && data.state === 'Fulfilled' && Array.isArray(data.summary)) {
+          this.lastConsultation = {
             createdAt: new Date().toISOString(),
             fields: data.summary.reduce((acc, item) => {
               if (item?.key) acc[item.key] = item.value || '';
@@ -164,7 +164,7 @@ export const useChatStore = defineStore('chat', {
         messages: this.messages,
         sessionId: this.sessionId,
         summaryItems: this.summaryItems,
-        lastReservation: this.lastReservation,
+        lastConsultation: this.lastConsultation,
         selectedEngine: this.selectedEngine,
         updatedAt: Date.now()
       };
@@ -179,7 +179,7 @@ export const useChatStore = defineStore('chat', {
           this.messages = state.messages || [];
           this.sessionId = state.sessionId || '';
           this.summaryItems = state.summaryItems || [];
-          this.lastReservation = state.lastReservation || null;
+          this.lastConsultation = state.lastConsultation || null;
           this.selectedEngine = normalizeEngineId(state.selectedEngine) || 'aws-lex';
         }
       } catch (error) {

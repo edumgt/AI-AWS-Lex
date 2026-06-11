@@ -1,24 +1,18 @@
 /**
- * Amazon Lex V2 자동 생성 스크립트 (Node.js / AWS SDK v3) - Idempotent FIX v2
+ * Amazon Lex V2 자동 생성 스크립트 (Node.js / AWS SDK v3) - 금융투자/증권사 챗봇
  *
- * Fixes / Improvements
- * 1) Bot name이 이미 존재하면 CreateBot 대신 기존 Bot 재사용 (BOT_ID / REUSE_EXISTING_BOT)
- * 2) Intent 생성 시 slot 참조 utterance를 "slot 생성 전"에 넣지 않도록 2-step (BASE -> FULL) 적용
- * 3) valueSelectionSetting.resolutionStrategy SDK enum 값 정정: "TopResolution"
- * 4) Locale / SlotType / Intent / Slot / Alias 모두 upsert 방식 (재실행 가능)
- * 5) Bot/Alias 상태가 Creating일 때 작업하면 실패하므로 wait(Available) 추가
- * 6) built-in slot type은 locale에 따라 다를 수 있어 list-built-in-slot-types 기반으로 선택 (fallback 포함)
+ * 도메인: 금융투자사/증권회사 투자상담 챗봇
+ * 인텐트: BookConsultation / CheckConsultation / CancelConsultation / ProductInfo / Help
  *
  * 실행:
  *   cd infra
  *   cp config.example.env config.env
- *   node lex-bootstrap.fixed.v2.js
+ *   node lex-bootstrap.js
  *
  * 옵션(env):
  *   BOT_ID=...                       # 특정 Bot 재사용
  *   REUSE_EXISTING_BOT=true|false    # 동일 이름 Bot 재사용 (default true)
  *   CREATE_NEW_VERSION=true|false    # 새 버전 매번 생성 (default true)
- *   FORCE_REFRESH_BUILTIN=true|false # built-in slot type 캐시 강제 재생성 (default false)
  */
 
 const fs = require("fs");
@@ -495,8 +489,8 @@ async function main() {
 
   const botIdEnv = process.env.BOT_ID || "";
 
-  const branchValues = parseCsv(process.env.BRANCH_VALUES || "강남점,홍대점,잠실점,분당점,인천점");
-  const courseValues = parseCsv(process.env.COURSE_VALUES || "토익,오픽,영어회화,일본어,자격증");
+  const branchValues = parseCsv(process.env.BRANCH_VALUES || "강남WM센터,여의도지점,압구정PB센터,종로지점,판교지점");
+  const productValues = parseCsv(process.env.PRODUCT_VALUES || "국내주식,해외주식,ETF,ELS,채권,펀드,ISA,연금저축");
 
   const sts = new STSClient({ region });
   const iam = new IAMClient({ region });
@@ -524,10 +518,10 @@ async function main() {
 
   console.log("[4/8] Upsert SlotTypes");
   const branchSlotTypeId = await upsertSlotType(lex, {
-    botId, localeId, slotTypeName: "BranchType", description: "학원 지점", values: branchValues
+    botId, localeId, slotTypeName: "BranchType", description: "증권사 지점/WM센터", values: branchValues
   });
-  const courseSlotTypeId = await upsertSlotType(lex, {
-    botId, localeId, slotTypeName: "CourseType", description: "수강 과정", values: courseValues
+  const productSlotTypeId = await upsertSlotType(lex, {
+    botId, localeId, slotTypeName: "ProductType", description: "금융투자 상품 유형", values: productValues
   });
 
   console.log("[5/8] Upsert Intents & Slots");
@@ -547,36 +541,42 @@ async function main() {
 
   console.log(`  - chosen built-ins: name=${nameType}, date=${dateType}, time=${timeType}, phone=${phoneType}`);
 
-  // MakeReservation: BASE -> slots -> FULL update
-  const makeBaseUtter = ["상담 예약할래요", "예약하고 싶어요", "수강 상담 예약"];
-  const makeFullUtter = [
-    "강남점 토익 예약하고 싶어요",
-    "{Branch} {CourseName} 상담 예약할래요",
-    "{Date} {Time}에 {Branch} {CourseName} 예약"
+  // ─── BookConsultation: BASE -> slots -> FULL update ───────────────────────
+  const bookBaseUtter = [
+    "투자상담 예약하고 싶어요",
+    "상담 예약할게요",
+    "투자 상담 받고 싶어요",
+    "PB 상담 신청할게요"
+  ];
+  const bookFullUtter = [
+    "여의도지점 ETF 상담 예약하고 싶어요",
+    "{Branch} {ProductType} 투자상담 예약할래요",
+    "{Date} {Time}에 {Branch} {ProductType} 상담 예약해줘",
+    "강남WM센터 국내주식 상담 예약"
   ];
 
-  const makeIntentId = await upsertIntentBase(lex, {
-    botId, localeId, intentName: "MakeReservation", description: "상담/수강 예약 생성", baseUtterances: makeBaseUtter
+  const bookIntentId = await upsertIntentBase(lex, {
+    botId, localeId, intentName: "BookConsultation", description: "투자상담 예약 생성", baseUtterances: bookBaseUtter
   });
-  assertId("MAKE_INTENT_ID", makeIntentId);
+  assertId("BOOK_INTENT_ID", bookIntentId);
 
-  const sBranch = await upsertSlot(lex, { botId, localeId, intentId: makeIntentId, slotName: "Branch", slotTypeId: branchSlotTypeId, required: true, prompt: "어느 지점으로 예약할까요? (예: 강남점)" });
-  const sCourse = await upsertSlot(lex, { botId, localeId, intentId: makeIntentId, slotName: "CourseName", slotTypeId: courseSlotTypeId, required: true, prompt: "어떤 과정을 원하세요? (예: 토익)" });
-  const sDate   = await upsertSlot(lex, { botId, localeId, intentId: makeIntentId, slotName: "Date", slotTypeId: dateType, required: true, prompt: "희망 날짜를 알려주세요. (예: 2026-02-10 또는 2월 10일)" });
-  const sTime   = await upsertSlot(lex, { botId, localeId, intentId: makeIntentId, slotName: "Time", slotTypeId: timeType, required: true, prompt: "희망 시간을 알려주세요. (예: 19:30)" });
-  const sName   = await upsertSlot(lex, { botId, localeId, intentId: makeIntentId, slotName: "StudentName", slotTypeId: nameType, required: true, prompt: "예약자 이름을 알려주세요." });
-  const sPhone  = await upsertSlot(lex, { botId, localeId, intentId: makeIntentId, slotName: "PhoneNumber", slotTypeId: phoneType, required: true, prompt: "연락처를 알려주세요. (예: 010-1234-5678)" });
+  const sBranch  = await upsertSlot(lex, { botId, localeId, intentId: bookIntentId, slotName: "Branch",      slotTypeId: branchSlotTypeId,  required: true,  prompt: "어느 지점/WM센터로 예약할까요? (예: 여의도지점, 강남WM센터)" });
+  const sProduct = await upsertSlot(lex, { botId, localeId, intentId: bookIntentId, slotName: "ProductType", slotTypeId: productSlotTypeId, required: true,  prompt: "어떤 상품의 상담을 원하세요? (예: 국내주식, ETF, 펀드, ISA)" });
+  const sDate    = await upsertSlot(lex, { botId, localeId, intentId: bookIntentId, slotName: "Date",        slotTypeId: dateType,          required: true,  prompt: "희망 상담 날짜를 알려주세요. (예: 2026-07-15 또는 7월 15일)" });
+  const sTime    = await upsertSlot(lex, { botId, localeId, intentId: bookIntentId, slotName: "Time",        slotTypeId: timeType,          required: true,  prompt: "희망 상담 시간을 알려주세요. (예: 14:00)" });
+  const sName    = await upsertSlot(lex, { botId, localeId, intentId: bookIntentId, slotName: "CustomerName",slotTypeId: nameType,          required: true,  prompt: "예약자 성함을 알려주세요." });
+  const sPhone   = await upsertSlot(lex, { botId, localeId, intentId: bookIntentId, slotName: "PhoneNumber", slotTypeId: phoneType,         required: true,  prompt: "연락처를 알려주세요. (예: 010-1234-5678)" });
 
-  // FULL update with slot priorities + codehook enabled
+  // FULL update with slot priorities + codehook
   await lex.send(new UpdateIntentCommand({
     botId, botVersion: "DRAFT", localeId,
-    intentId: makeIntentId,
-    intentName: "MakeReservation",
-    description: "상담/수강 예약 생성",
-    sampleUtterances: makeFullUtter.map(u => ({ utterance: u })),
+    intentId: bookIntentId,
+    intentName: "BookConsultation",
+    description: "투자상담 예약 생성",
+    sampleUtterances: bookFullUtter.map(u => ({ utterance: u })),
     slotPriorities: [
       { priority: 1, slotId: sBranch },
-      { priority: 2, slotId: sCourse },
+      { priority: 2, slotId: sProduct },
       { priority: 3, slotId: sDate },
       { priority: 4, slotId: sTime },
       { priority: 5, slotId: sName },
@@ -584,7 +584,140 @@ async function main() {
     ],
     fulfillmentCodeHook: { enabled: true }
   }));
-  console.log("  - MakeReservation updated(FULL) OK");
+  console.log("  - BookConsultation updated(FULL) OK");
+
+  // ─── CheckConsultation ─────────────────────────────────────────────────────
+  const checkBaseUtter = [
+    "상담 예약 조회해줘",
+    "예약 확인하고 싶어요",
+    "내 상담 예약 있어?",
+    "예약번호로 조회할게"
+  ];
+  const checkIntentId = await upsertIntentBase(lex, {
+    botId, localeId, intentName: "CheckConsultation", description: "투자상담 예약 조회", baseUtterances: checkBaseUtter
+  });
+  assertId("CHECK_INTENT_ID", checkIntentId);
+
+  const alphaNum = pickSupported(builtins, ["AMAZON.AlphaNumeric", "AMAZON.Number"], ["AMAZON.Text"]);
+  if (!alphaNum) throw new Error("AMAZON.AlphaNumeric/Number built-in not found");
+
+  await upsertSlot(lex, { botId, localeId, intentId: checkIntentId, slotName: "ConsultationId", slotTypeId: alphaNum, required: false, prompt: "예약번호를 알려주세요. (예: C-ABCD12)" });
+  await lex.send(new UpdateIntentCommand({
+    botId, botVersion: "DRAFT", localeId,
+    intentId: checkIntentId,
+    intentName: "CheckConsultation",
+    description: "투자상담 예약 조회",
+    sampleUtterances: [
+      ...checkBaseUtter,
+      "C-ABCD12 예약 조회",
+      "예약번호 C-TEST01 확인",
+      "방금 예약한 거 확인해줘",
+      "내 마지막 상담 예약 내용 뭐야?",
+      "상담 예약 내역 확인",
+      "예약 상태 알려줘"
+    ].map(u => ({ utterance: u })),
+    fulfillmentCodeHook: { enabled: true }
+  }));
+  console.log("  - CheckConsultation updated OK");
+
+  // ─── CancelConsultation ────────────────────────────────────────────────────
+  const cancelBaseUtter = [
+    "상담 예약 취소하고 싶어요",
+    "예약 취소해줘",
+    "상담 취소할래요"
+  ];
+  const cancelIntentId = await upsertIntentBase(lex, {
+    botId, localeId, intentName: "CancelConsultation", description: "투자상담 예약 취소", baseUtterances: cancelBaseUtter
+  });
+  assertId("CANCEL_INTENT_ID", cancelIntentId);
+
+  await upsertSlot(lex, { botId, localeId, intentId: cancelIntentId, slotName: "ConsultationId", slotTypeId: alphaNum, required: false, prompt: "취소할 예약번호를 알려주세요. (예: C-ABCD12)" });
+  await lex.send(new UpdateIntentCommand({
+    botId, botVersion: "DRAFT", localeId,
+    intentId: cancelIntentId,
+    intentName: "CancelConsultation",
+    description: "투자상담 예약 취소",
+    sampleUtterances: [
+      ...cancelBaseUtter,
+      "C-ABCD12 취소해줘",
+      "예약번호 C-TEST01 취소",
+      "마지막 예약 취소해줘",
+      "방금 잡은 상담 취소할게",
+      "여의도지점 상담 예약 취소",
+      "상담 예약 삭제해줘"
+    ].map(u => ({ utterance: u })),
+    fulfillmentCodeHook: { enabled: true }
+  }));
+  console.log("  - CancelConsultation updated OK");
+
+  // ─── ProductInfo ───────────────────────────────────────────────────────────
+  const productInfoBaseUtter = [
+    "금융상품 안내해줘",
+    "투자 상품 정보 알려줘",
+    "ETF가 뭐야",
+    "펀드 투자 어떻게 해"
+  ];
+  const productInfoIntentId = await upsertIntentBase(lex, {
+    botId, localeId, intentName: "ProductInfo", description: "금융투자 상품 안내", baseUtterances: productInfoBaseUtter
+  });
+  assertId("PRODUCT_INFO_INTENT_ID", productInfoIntentId);
+
+  await upsertSlot(lex, { botId, localeId, intentId: productInfoIntentId, slotName: "ProductType", slotTypeId: productSlotTypeId, required: false, prompt: "어떤 상품이 궁금하세요? (예: ETF, 국내주식, 펀드, ELS, ISA)" });
+  await lex.send(new UpdateIntentCommand({
+    botId, botVersion: "DRAFT", localeId,
+    intentId: productInfoIntentId,
+    intentName: "ProductInfo",
+    description: "금융투자 상품 안내",
+    sampleUtterances: [
+      ...productInfoBaseUtter,
+      "국내주식 투자 방법 알려줘",
+      "해외주식 수수료 얼마야",
+      "ELS 위험도 어때?",
+      "채권 투자 안내해줘",
+      "ISA 계좌 혜택이 뭐야",
+      "연금저축 상품 설명해줘",
+      "ETF 종류가 어떻게 돼?",
+      "펀드 수익률 어떻게 봐?",
+      "해외주식 환율 위험 있나요"
+    ].map(u => ({ utterance: u })),
+    fulfillmentCodeHook: { enabled: true }
+  }));
+  console.log("  - ProductInfo updated OK");
+
+  // ─── Help ──────────────────────────────────────────────────────────────────
+  const helpBaseUtter = [
+    "할 수 있는 거 알려줘",
+    "도움말",
+    "무슨 기능이 있어?",
+    "상담 예약은 어떻게 해?",
+    "메뉴 알려줘"
+  ];
+  const helpIntentId = await upsertIntentBase(lex, {
+    botId, localeId, intentName: "Help", description: "기능 안내/도움말", baseUtterances: helpBaseUtter
+  });
+  assertId("HELP_INTENT_ID", helpIntentId);
+  await lex.send(new UpdateIntentCommand({
+    botId, botVersion: "DRAFT", localeId,
+    intentId: helpIntentId,
+    intentName: "Help",
+    description: "기능 안내/도움말",
+    sampleUtterances: [
+      ...helpBaseUtter,
+      "사용 방법",
+      "뭐라고 말하면 돼?",
+      "예시 문장 알려줘",
+      "사용법 설명해줘",
+      "가능한 요청 목록",
+      "기능 설명",
+      "어떤 질문 할 수 있어?",
+      "상담 예약 도와줘",
+      "예약 확인 도와줘",
+      "취소 도와줘",
+      "투자 상품 안내 받을 수 있어?"
+    ].map(u => ({ utterance: u })),
+    fulfillmentCodeHook: { enabled: true }
+  }));
+  console.log("  - Help updated OK");
 
   console.log("[6/8] Build Locale");
   await lex.send(new BuildBotLocaleCommand({ botId, botVersion: "DRAFT", localeId }));

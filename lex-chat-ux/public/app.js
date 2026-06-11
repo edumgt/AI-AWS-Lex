@@ -58,7 +58,7 @@
     $chat.innerHTML = "";
     $chips.innerHTML = "";
     renderSummary([]);
-    addBot("새 세션을 시작했어요. 예) “강남점 토익 예약하고 싶어요”");
+    addBot(“새 세션을 시작했어요. 예) \”여의도지점 ETF 투자상담 예약하고 싶어요\””);
     $input.focus();
     setInputUx({ mode: "message" });
   }
@@ -129,7 +129,7 @@
   function renderSummary(summaryItems) {
     $summary.innerHTML = "";
     const items = (summaryItems && summaryItems.length) ? summaryItems : [];
-    const defaultKeys = ["지점","과정","날짜","시간","이름","연락처","예약번호"];
+    const defaultKeys = ["지점","상품","날짜","시간","고객명","연락처","예약번호"];
     const normalized = items.length ? items : defaultKeys.map(l => ({ label: l, value: null }));
 
     normalized.forEach(it => {
@@ -274,7 +274,7 @@
       $chat.innerHTML = "";
       history.forEach(m => bubble(m.role, m.text, m.meta));
     } else {
-      addBot("안녕하세요! Lex와 연결된 데모 채팅입니다. 예) “강남점 토익 예약하고 싶어요”");
+      addBot(“안녕하세요! KF증권 AI 투자상담입니다. 예) \”여의도지점 ETF 투자상담 예약하고 싶어요\””);
     }
     renderSummary(getLastSummary());
   }

@@ -1,7 +1,7 @@
 <template>
   <div class="campus-picker" :class="{ compact }">
     <div class="picker-copy">
-      <div class="text-subtitle2 text-weight-bold text-grey-9">지도로 캠퍼스를 선택하세요</div>
+      <div class="text-subtitle2 text-weight-bold text-grey-9">지도로 지점을 선택하세요</div>
       <div class="text-caption text-grey-7">핀을 누르거나 아래 카드에서 바로 선택할 수 있어요.</div>
     </div>
 
