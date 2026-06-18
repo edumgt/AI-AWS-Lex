@@ -15,8 +15,8 @@
           <div class="flex items-center">
             <q-avatar size="40px" color="white" text-color="primary" icon="smart_toy" />
             <div class="ml-3">
-              <div class="font-bold text-lg">KF증권 투자상담 챗봇</div>
-              <div class="text-xs opacity-90">투자상담 예약 및 금융상품 안내</div>
+              <div class="font-bold text-lg">{{ engineUi.title }}</div>
+              <div class="text-xs opacity-90">{{ engineUi.subtitle }}</div>
             </div>
           </div>
           
@@ -85,7 +85,7 @@
         v-if="summaryItems.length > 0" 
         class="bg-blue-50 py-3 border-b"
       >
-        <div class="text-sm font-semibold text-gray-700 mb-2">상담 예약 정보</div>
+        <div class="text-sm font-semibold text-gray-700 mb-2">{{ engineUi.summaryTitle }}</div>
         <div class="flex flex-wrap gap-2">
           <q-chip
             v-for="item in summaryItems"
@@ -248,6 +248,37 @@ const selectedBranch = computed(() => {
   const branchItem = summaryItems.value.find((item) => item.key === 'Branch');
   return branchItem?.value || '';
 });
+const ENGINE_UI = {
+  'aws-lex': {
+    title: 'KF증권 투자상담 챗봇',
+    subtitle: '투자상담 예약 및 금융상품 안내',
+    summaryTitle: '상담 예약 정보',
+    greeting: '안녕하세요! KF증권 AI 투자상담입니다.\n예) "여의도지점 ETF 투자상담 예약하고 싶어요"',
+    newSession: '새 세션을 시작했어요. 예) "여의도지점 ETF 투자상담 예약하고 싶어요"'
+  },
+  'azure-clu': {
+    title: 'KF증권 투자상담 챗봇',
+    subtitle: '투자상담 예약 및 금융상품 안내',
+    summaryTitle: '상담 예약 정보',
+    greeting: '안녕하세요! KF증권 AI 투자상담입니다.\n예) "여의도지점 ETF 투자상담 예약하고 싶어요"',
+    newSession: '새 세션을 시작했어요. 예) "여의도지점 ETF 투자상담 예약하고 싶어요"'
+  },
+  ollama: {
+    title: 'KF증권 투자상담 챗봇',
+    subtitle: '투자상담 예약 및 금융상품 안내',
+    summaryTitle: '상담 예약 정보',
+    greeting: '안녕하세요! KF증권 AI 투자상담입니다.\n예) "여의도지점 ETF 투자상담 예약하고 싶어요"',
+    newSession: '새 세션을 시작했어요. 예) "여의도지점 ETF 투자상담 예약하고 싶어요"'
+  },
+  rasa: {
+    title: '글로벌어학원 상담 챗봇',
+    subtitle: '수강 상담 예약 및 과정 안내',
+    summaryTitle: '상담 진행 정보',
+    greeting: '안녕하세요! 글로벌어학원 상담 챗봇입니다.\n예) "강남점 토익 상담 예약하고 싶어요"',
+    newSession: '새 세션을 시작했어요. 예) "강남점 토익 상담 예약하고 싶어요"'
+  }
+};
+const engineUi = computed(() => ENGINE_UI[selectedEngine.value] || ENGINE_UI['aws-lex']);
 
 const cardStyle = computed(() => {
   if ($q.screen.lt.md) {
@@ -274,7 +305,7 @@ watch(dialogOpen, (newVal) => {
   if (newVal) {
     chatStore.loadEngines();
     if (messages.value.length === 0) {
-      addBotMessage('안녕하세요! KF증권 AI 투자상담입니다.\n예) "여의도지점 ETF 투자상담 예약하고 싶어요"');
+      addBotMessage(engineUi.value.greeting);
     }
     consumeBranchPrefill();
   }
@@ -367,7 +398,7 @@ const startNewSession = async () => {
     persistent: false
   }).onOk(() => {
     chatStore.resetSession();
-    addBotMessage('새 세션을 시작했어요. 예) "여의도지점 ETF 투자상담 예약하고 싶어요"');
+    addBotMessage(engineUi.value.newSession);
   });
 };
 </script>

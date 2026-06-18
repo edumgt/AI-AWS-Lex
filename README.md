@@ -1,6 +1,6 @@
-# Amazon Lex V2 + Node.js 실습 패키지 (학원 예약/상담 도메인)
+# Amazon Lex V2 + Node.js 실습 패키지
 
-![홈페이지 미리보기](docs/assets/reservation-reminder.png)
+![](./sample.png)
 
 ## 오늘 예약 리마인더 모달
 

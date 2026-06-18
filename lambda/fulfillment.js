@@ -10,10 +10,33 @@ function getSlotValue(slots, slotName) {
   return slot?.value?.interpretedValue || slot?.value?.originalValue || null;
 }
 
+function normalizeText(value) {
+  return String(value || "").trim();
+}
+
+function detectProductType(text) {
+  const normalized = normalizeText(text);
+  if (!normalized) return null;
+
+  const productTypes = [
+    "국내주식",
+    "해외주식",
+    "ETF",
+    "ELS",
+    "채권",
+    "펀드",
+    "ISA",
+    "연금저축"
+  ];
+
+  return productTypes.find((product) => normalized.includes(product)) || null;
+}
+
 function close(event, fulfillmentState, message) {
   return {
     sessionState: {
       ...event.sessionState,
+      dialogAction: { type: "Close" },
       intent: {
         ...event.sessionState.intent,
         state: fulfillmentState
@@ -38,6 +61,7 @@ exports.handler = async (event) => {
   const intentName = event.sessionState?.intent?.name;
   const slots = event.sessionState?.intent?.slots || {};
   const sessionAttrs = event.sessionState?.sessionAttributes || {};
+  const inputText = event.inputTranscript || event.inputText || "";
 
   // ─── BookConsultation ───────────────────────────────────────────────────────
   if (intentName === "BookConsultation") {
@@ -61,6 +85,7 @@ exports.handler = async (event) => {
     return {
       sessionState: {
         ...event.sessionState,
+        dialogAction: { type: "Close" },
         intent: { ...event.sessionState.intent, state: "Fulfilled" },
         sessionAttributes: newSessionAttrs
       },
@@ -109,6 +134,7 @@ exports.handler = async (event) => {
     return {
       sessionState: {
         ...event.sessionState,
+        dialogAction: { type: "Close" },
         intent: { ...event.sessionState.intent, state: "Fulfilled" },
         sessionAttributes: newSessionAttrs
       },
@@ -118,7 +144,7 @@ exports.handler = async (event) => {
 
   // ─── ProductInfo ────────────────────────────────────────────────────────────
   if (intentName === "ProductInfo") {
-    const productType = getSlotValue(slots, "ProductType");
+    const productType = getSlotValue(slots, "ProductType") || detectProductType(inputText);
     if (!productType) {
       return close(event, "Fulfilled", "어떤 금융상품이 궁금하세요? 예: 국내주식, 해외주식, ETF, ELS, 채권, 펀드, ISA, 연금저축");
     }

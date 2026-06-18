@@ -113,6 +113,8 @@ services:
     ports:
       - "9000:9000"    # Quasar dev server (브라우저 접속)
       - "3000:3000"    # Express API server
+    volumes:
+      - /root/.aws:/root/.aws:ro
     env_file:
       - path: .env     # AWS/Azure 자격증명 등
         required: false  # .env 없어도 시작 가능 (Rasa만 쓸 경우 불필요)

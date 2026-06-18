@@ -3,7 +3,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const { nanoid } = require("nanoid");
 require("dotenv").config();
-const { loadRuntimeEnv } = require("../../shared/runtimeEnv");
+const { loadRuntimeEnv } = require("./runtimeEnv");
 
 loadRuntimeEnv();
 

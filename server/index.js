@@ -1,7 +1,7 @@
 const express = require("express");
 const http    = require("http");
 const { URL } = require("url");
-const { loadRuntimeEnv } = require("../shared/runtimeEnv");
+const { loadRuntimeEnv } = require("./runtimeEnv");
 
 loadRuntimeEnv();
 

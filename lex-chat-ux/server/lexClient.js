@@ -1,5 +1,5 @@
 const { LexRuntimeV2Client, RecognizeTextCommand } = require("@aws-sdk/client-lex-runtime-v2");
-const { loadRuntimeEnv } = require("../../shared/runtimeEnv");
+const { loadRuntimeEnv } = require("./runtimeEnv");
 
 loadRuntimeEnv();
 

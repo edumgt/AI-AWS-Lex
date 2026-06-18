@@ -9,8 +9,8 @@
                @click="leftOpen = !leftOpen" />
 
         <div class="gem-logo q-ml-xs">
-          <q-icon name="show_chart" size="20px" color="primary" />
-          <span class="gem-logo-text">KF증권 AI 투자상담</span>
+          <q-icon :name="engineUi.brandIcon" size="20px" color="primary" />
+          <span class="gem-logo-text">{{ engineUi.brand }}</span>
         </div>
 
         <q-space />
@@ -29,7 +29,7 @@
         <q-btn flat round dense icon="info_outline"
                class="gem-icon-btn"
                @click="rightOpen = !rightOpen">
-          <q-tooltip anchor="bottom middle" self="top middle">상담 예약 현황 &amp; 설정</q-tooltip>
+          <q-tooltip anchor="bottom middle" self="top middle">{{ engineUi.drawerTooltip }}</q-tooltip>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -52,7 +52,7 @@
       <q-separator class="gem-sep q-my-xs" />
 
       <q-list padding class="q-pb-xs">
-        <q-item-label header class="gem-drawer-label">메뉴</q-item-label>
+          <q-item-label header class="gem-drawer-label">{{ engineUi.menuLabel }}</q-item-label>
         <q-item
           v-for="nav in navItems" :key="nav.label"
           clickable v-ripple
@@ -71,7 +71,7 @@
       <q-separator class="gem-sep q-my-xs" />
 
       <div class="q-px-md q-py-sm">
-        <q-item-label class="gem-drawer-label q-mb-sm">AI 엔진</q-item-label>
+        <q-item-label class="gem-drawer-label q-mb-sm">{{ engineUi.engineLabel }}</q-item-label>
         <q-select
           v-model="engineModel"
           :options="engineOptions"
@@ -106,7 +106,7 @@
       <div class="q-pa-md">
 
         <template v-if="summaryItems.length > 0">
-          <div class="gem-panel-title q-mb-sm">상담 예약 현황</div>
+          <div class="gem-panel-title q-mb-sm">{{ engineUi.summaryPanelTitle }}</div>
           <div class="summary-grid">
             <div v-for="item in summaryItems" :key="item.key" class="summary-row">
               <span class="summary-key">{{ item.label }}</span>
@@ -120,7 +120,7 @@
           <q-separator class="gem-sep q-my-md" />
         </template>
 
-        <div class="gem-panel-title q-mb-sm">지점 선택</div>
+        <div class="gem-panel-title q-mb-sm">{{ engineUi.locationPanelTitle }}</div>
         <CampusMapPicker
           compact
           :selected-branch="selectedBranch"
@@ -129,7 +129,7 @@
 
         <q-separator class="gem-sep q-my-md" />
 
-        <div class="gem-panel-title q-mb-xs">세션 ID</div>
+        <div class="gem-panel-title q-mb-xs">{{ engineUi.sessionLabel }}</div>
         <div class="session-id-text">{{ sessionId || '(없음)' }}</div>
         <q-btn flat dense icon="refresh" label="새 세션" size="sm"
                class="q-mt-sm" color="grey-7"
@@ -150,11 +150,11 @@
           <!-- Welcome state -->
           <div v-if="messages.length === 0" class="welcome-wrapper">
             <div class="q-mb-lg">
-              <q-icon name="auto_awesome" size="52px" color="primary" />
+              <q-icon :name="engineUi.welcomeIcon" size="52px" color="primary" />
             </div>
-            <h1 class="welcome-title">무엇을 도와드릴까요?</h1>
-            <p class="welcome-sub">투자상담 예약, 금융상품 안내, 예약 조회를 자유롭게 물어보세요</p>
-            <p class="welcome-disclaimer">※ 투자는 원금 손실이 발생할 수 있으며, 투자 결정은 고객 본인의 판단과 책임 하에 이루어집니다.</p>
+            <h1 class="welcome-title">{{ engineUi.welcomeTitle }}</h1>
+            <p class="welcome-sub">{{ engineUi.welcomeSubtitle }}</p>
+            <p class="welcome-disclaimer">{{ engineUi.welcomeDisclaimer }}</p>
             <div class="suggestion-row q-mt-xl">
               <q-btn
                 v-for="s in suggestions" :key="s"
@@ -173,10 +173,10 @@
             >
               <template v-if="msg.role !== 'user'">
                 <div class="bot-avatar-circle">
-                  <q-icon name="auto_awesome" size="16px" color="primary" />
+                  <q-icon :name="engineUi.welcomeIcon" size="16px" color="primary" />
                 </div>
                 <div class="bot-body">
-                  <div class="bot-name-label">KF증권 AI</div>
+                  <div class="bot-name-label">{{ engineUi.botLabel }}</div>
                   <div class="bot-text whitespace-pre-wrap">{{ msg.text }}</div>
                   <div v-if="msg.meta" class="msg-meta">{{ msg.meta }}</div>
                 </div>
@@ -189,10 +189,10 @@
             <!-- Typing indicator -->
             <div v-if="isTyping" class="msg-row bot-row">
               <div class="bot-avatar-circle">
-                <q-icon name="auto_awesome" size="16px" color="primary" />
+                <q-icon :name="engineUi.welcomeIcon" size="16px" color="primary" />
               </div>
               <div class="bot-body">
-                <div class="bot-name-label">KF증권 AI</div>
+                <div class="bot-name-label">{{ engineUi.botLabel }}</div>
                 <div class="typing-dots">
                   <span class="tdot"></span>
                   <span class="tdot"></span>
@@ -249,7 +249,7 @@
               @click="sendMessage"
             />
           </div>
-          <div class="input-footer-text">KF증권 AI 투자상담 · 투자 결과는 고객 본인의 판단과 책임 하에 이루어집니다</div>
+          <div class="input-footer-text">{{ engineUi.footer }}</div>
         </div>
 
       </q-page>
@@ -258,10 +258,10 @@
 
     <!-- ══════════════ RESERVATION REMINDER ══════════════ -->
     <q-dialog v-model="reminderOpen">
-      <q-card class="reminder-card">
+        <q-card class="reminder-card">
         <q-card-section class="reminder-header">
           <div class="text-overline" style="color: #059669;">Today Reminder</div>
-          <div class="text-h6 text-weight-bold" style="color: #065f46;">오늘 투자상담 일정이 있어요</div>
+          <div class="text-h6 text-weight-bold" style="color: #065f46;">{{ engineUi.reminderTitle }}</div>
         </q-card-section>
         <q-card-section class="q-pa-lg">
           <p class="text-body2 text-grey-8 q-mb-md">{{ reminderMessage }}</p>
@@ -280,7 +280,7 @@
         </q-card-section>
         <q-card-actions align="right" class="q-pa-md q-pt-none">
           <q-btn flat label="나중에 보기" color="grey-6" @click="dismissReminder" />
-          <q-btn unelevated rounded label="상담 예약 확인하기" color="primary" @click="openReminderChat" />
+          <q-btn unelevated rounded :label="engineUi.reminderActionLabel" color="primary" @click="openReminderChat" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -328,6 +328,129 @@ const currentEngineLabel = computed(() =>
   || selectedEngine.value
   || '엔진'
 );
+const ENGINE_UI = {
+  'aws-lex': {
+    brand: 'KF증권 AI 투자상담',
+    brandIcon: 'show_chart',
+    welcomeIcon: 'auto_awesome',
+    drawerTooltip: '상담 예약 현황 & 설정',
+    menuLabel: '메뉴',
+    engineLabel: 'AI 엔진',
+    summaryPanelTitle: '상담 예약 현황',
+    locationPanelTitle: '지점 선택',
+    sessionLabel: '세션 ID',
+    welcomeTitle: '무엇을 도와드릴까요?',
+    welcomeSubtitle: '투자상담 예약, 금융상품 안내, 예약 조회를 자유롭게 물어보세요',
+    welcomeDisclaimer: '※ 투자는 원금 손실이 발생할 수 있으며, 투자 결정은 고객 본인의 판단과 책임 하에 이루어집니다.',
+    botLabel: 'KF증권 AI',
+    footer: 'KF증권 AI 투자상담 · 투자 결과는 고객 본인의 판단과 책임 하에 이루어집니다',
+    reminderTitle: '오늘 투자상담 일정이 있어요',
+    reminderActionLabel: '상담 예약 확인하기',
+    navItems: [
+      { icon: 'show_chart', label: '투자상담 예약', prompt: '투자상담 예약하고 싶어요' },
+      { icon: 'account_balance', label: '금융상품 안내', prompt: '어떤 금융상품이 있나요?' },
+      { icon: 'search', label: '예약 조회', prompt: '상담 예약 조회해줘' },
+      { icon: 'place', label: '지점 안내', prompt: '지점 위치가 어디인가요?' }
+    ],
+    suggestions: [
+      '여의도지점 ETF 상담 예약하기',
+      'ISA 계좌 혜택 알려줘',
+      '투자상담 예약 확인하고 싶어요',
+      '연금저축 세액공제 얼마야?'
+    ]
+  },
+  'azure-clu': {
+    brand: 'KF증권 AI 투자상담',
+    brandIcon: 'show_chart',
+    welcomeIcon: 'auto_awesome',
+    drawerTooltip: '상담 예약 현황 & 설정',
+    menuLabel: '메뉴',
+    engineLabel: 'AI 엔진',
+    summaryPanelTitle: '상담 예약 현황',
+    locationPanelTitle: '지점 선택',
+    sessionLabel: '세션 ID',
+    welcomeTitle: '무엇을 도와드릴까요?',
+    welcomeSubtitle: '투자상담 예약, 금융상품 안내, 예약 조회를 자유롭게 물어보세요',
+    welcomeDisclaimer: '※ 투자는 원금 손실이 발생할 수 있으며, 투자 결정은 고객 본인의 판단과 책임 하에 이루어집니다.',
+    botLabel: 'KF증권 AI',
+    footer: 'KF증권 AI 투자상담 · 투자 결과는 고객 본인의 판단과 책임 하에 이루어집니다',
+    reminderTitle: '오늘 투자상담 일정이 있어요',
+    reminderActionLabel: '상담 예약 확인하기',
+    navItems: [
+      { icon: 'show_chart', label: '투자상담 예약', prompt: '투자상담 예약하고 싶어요' },
+      { icon: 'account_balance', label: '금융상품 안내', prompt: '어떤 금융상품이 있나요?' },
+      { icon: 'search', label: '예약 조회', prompt: '상담 예약 조회해줘' },
+      { icon: 'place', label: '지점 안내', prompt: '지점 위치가 어디인가요?' }
+    ],
+    suggestions: [
+      '여의도지점 ETF 상담 예약하기',
+      'ISA 계좌 혜택 알려줘',
+      '투자상담 예약 확인하고 싶어요',
+      '연금저축 세액공제 얼마야?'
+    ]
+  },
+  ollama: {
+    brand: 'KF증권 AI 투자상담',
+    brandIcon: 'show_chart',
+    welcomeIcon: 'auto_awesome',
+    drawerTooltip: '상담 예약 현황 & 설정',
+    menuLabel: '메뉴',
+    engineLabel: 'AI 엔진',
+    summaryPanelTitle: '상담 예약 현황',
+    locationPanelTitle: '지점 선택',
+    sessionLabel: '세션 ID',
+    welcomeTitle: '무엇을 도와드릴까요?',
+    welcomeSubtitle: '투자상담 예약, 금융상품 안내, 예약 조회를 자유롭게 물어보세요',
+    welcomeDisclaimer: '※ 투자는 원금 손실이 발생할 수 있으며, 투자 결정은 고객 본인의 판단과 책임 하에 이루어집니다.',
+    botLabel: 'KF증권 AI',
+    footer: 'KF증권 AI 투자상담 · 투자 결과는 고객 본인의 판단과 책임 하에 이루어집니다',
+    reminderTitle: '오늘 투자상담 일정이 있어요',
+    reminderActionLabel: '상담 예약 확인하기',
+    navItems: [
+      { icon: 'show_chart', label: '투자상담 예약', prompt: '투자상담 예약하고 싶어요' },
+      { icon: 'account_balance', label: '금융상품 안내', prompt: '어떤 금융상품이 있나요?' },
+      { icon: 'search', label: '예약 조회', prompt: '상담 예약 조회해줘' },
+      { icon: 'place', label: '지점 안내', prompt: '지점 위치가 어디인가요?' }
+    ],
+    suggestions: [
+      '여의도지점 ETF 상담 예약하기',
+      'ISA 계좌 혜택 알려줘',
+      '투자상담 예약 확인하고 싶어요',
+      '연금저축 세액공제 얼마야?'
+    ]
+  },
+  rasa: {
+    brand: '글로벌어학원 AI 상담',
+    brandIcon: 'school',
+    welcomeIcon: 'forum',
+    drawerTooltip: '상담 진행 현황 & 설정',
+    menuLabel: '메뉴',
+    engineLabel: 'AI 엔진',
+    summaryPanelTitle: '상담 진행 현황',
+    locationPanelTitle: '캠퍼스 선택',
+    sessionLabel: '세션 ID',
+    welcomeTitle: '수강 상담을 시작해 볼까요?',
+    welcomeSubtitle: '수강 상담 예약, 과정 안내, 예약 조회를 자연스럽게 물어보세요',
+    welcomeDisclaimer: '※ 수강 일정과 좌석 현황은 실제 운영 상황에 따라 달라질 수 있습니다.',
+    botLabel: '글로벌어학원 AI',
+    footer: '글로벌어학원 AI 상담 · 수강 일정과 좌석은 실제 운영 상황에 따라 달라질 수 있습니다',
+    reminderTitle: '오늘 수강상담 일정이 있어요',
+    reminderActionLabel: '상담 일정 확인하기',
+    navItems: [
+      { icon: 'event_available', label: '수강상담 예약', prompt: '수강 상담 예약하고 싶어요' },
+      { icon: 'menu_book', label: '과정 안내', prompt: '토익 과정 안내해줘' },
+      { icon: 'search', label: '예약 조회', prompt: '상담 예약 확인하고 싶어요' },
+      { icon: 'place', label: '캠퍼스 안내', prompt: '강남점 위치 알려줘' }
+    ],
+    suggestions: [
+      '강남점 토익 상담 예약하고 싶어요',
+      '토익 과정 안내해줘',
+      '수강 상담 예약 확인하고 싶어요',
+      '주말반도 있나요?'
+    ]
+  }
+};
+const engineUi = computed(() => ENGINE_UI[selectedEngine.value] || ENGINE_UI['aws-lex']);
 
 const firstUserMessage = computed(() => {
   const m = messages.value.find(m => m.role === 'user');
@@ -355,12 +478,7 @@ const onEngineChange = () => {
 };
 
 // ── Navigation ──
-const navItems = [
-  { icon: 'show_chart',      label: '투자상담 예약', prompt: '투자상담 예약하고 싶어요' },
-  { icon: 'account_balance', label: '금융상품 안내', prompt: '어떤 금융상품이 있나요?' },
-  { icon: 'search',          label: '예약 조회',    prompt: '상담 예약 조회해줘' },
-  { icon: 'place',           label: '지점 안내',    prompt: '지점 위치가 어디인가요?' },
-];
+const navItems = computed(() => engineUi.value.navItems);
 
 const handleNavClick = (nav) => {
   sendSuggestion(nav.prompt);
@@ -368,12 +486,7 @@ const handleNavClick = (nav) => {
 };
 
 // ── Suggestions ──
-const suggestions = [
-  '여의도지점 ETF 상담 예약하기',
-  'ISA 계좌 혜택 알려줘',
-  '투자상담 예약 확인하고 싶어요',
-  '연금저축 세액공제 얼마야?',
-];
+const suggestions = computed(() => engineUi.value.suggestions);
 
 // ── Scroll ──
 const scrollToBottom = () => {
@@ -461,17 +574,22 @@ const reminderDismissedKey = ref('');
 const reminderSummary = computed(() => {
   if (!todayReservation.value) return [];
   const r = todayReservation.value;
+  const productLabel = selectedEngine.value === 'rasa' ? '과정' : '상품';
+  const customerLabel = selectedEngine.value === 'rasa' ? '학생명' : '고객명';
   return [
-    { label: '상담 지점', value: r.Branch || '-' },
-    { label: '상품',      value: r.ProductType || '-' },
+    { label: '상담 지점', value: r.Branch || r.Campus || '-' },
+    { label: productLabel, value: r.ProductType || r.CourseType || r.CourseName || '-' },
     { label: '일시',      value: `${r.Date || '-'} ${r.Time || ''}`.trim() },
-    { label: '고객명',    value: r.CustomerName || '-' }
+    { label: customerLabel, value: r.CustomerName || r.StudentName || '-' }
   ];
 });
 
 const reminderMessage = computed(() => {
   if (!todayReservation.value) return '';
   const r = todayReservation.value;
+  if (selectedEngine.value === 'rasa') {
+    return `${r.StudentName || r.CustomerName || '수강생'}님, 오늘 ${r.Time || ''} ${r.Campus || r.Branch || ''} ${r.CourseType || r.CourseName || ''} 상담이 예정되어 있습니다.`;
+  }
   return `${r.CustomerName || '고객'}님, 오늘 ${r.Time || ''} ${r.Branch || ''} ${r.ProductType || ''} 투자상담이 예정되어 있습니다.`;
 });
 
@@ -483,8 +601,11 @@ const dismissReminder = () => {
 
 const openReminderChat = () => {
   reminderOpen.value = false;
-  const b = todayReservation.value?.Branch;
-  sendSuggestion(b ? `${b} 상담 예약 확인해줘` : '상담 예약 확인해줘');
+  const branch = todayReservation.value?.Branch || todayReservation.value?.Campus;
+  const prompt = selectedEngine.value === 'rasa'
+    ? '상담 예약 확인하고 싶어요'
+    : '상담 예약 확인해줘';
+  sendSuggestion(branch ? `${branch} ${prompt}` : prompt);
 };
 
 // ── Mount ──
