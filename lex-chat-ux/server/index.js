@@ -1,111 +1,62 @@
-const path = require("path");
-const express = require("express");
+"use strict";
+/**
+ * Express 서버 — chatbot-api Lambda 프록시
+ *
+ * 모든 비즈니스 로직은 AWS Lambda(chatbot-api)에 있습니다.
+ * 이 서버는 HTTP ↔ Lambda SDK InvokeCommand 변환만 담당합니다.
+ *
+ *   Browser → POST /api/chat
+ *     → Quasar dev proxy(:9000)
+ *     → 이 서버(:3000)
+ *     → AWS SDK InvokeCommand
+ *     → chatbot-api Lambda (ap-northeast-2)
+ */
+
+const path         = require("path");
+const express      = require("express");
 const cookieParser = require("cookie-parser");
-const { nanoid } = require("nanoid");
-require("dotenv").config();
 const { loadRuntimeEnv } = require("./runtimeEnv");
 
 loadRuntimeEnv();
 
-const { recognizeText } = require("./lexClient");
-
-const { formatLexResponse } = require("./lexFormatter");
-const { getSuggestions } = require("./suggestions");
-const { chatWithOnPremEngine, getEnabledEngines } = require("./onpremClient");
-const { runReservationFlow } = require("./reservationFlow");
+const { invokeChatApi, FUNCTION_NAME } = require("./lambdaClient");
 
 const app = express();
 app.use(express.json({ limit: "256kb" }));
 app.use(cookieParser());
-
-// static frontend
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-app.get("/api/health", (req, res) => res.json({ ok: true }));
-
-app.get("/api/engines", (req, res) => {
-  const engines = getEnabledEngines();
-  const defaultEngine = (process.env.DEFAULT_AI_ENGINE || "aws-lex").toString().trim();
-  const enabledIds = new Set(engines.map((engine) => engine.key));
-
-  res.json({
-    defaultEngine: enabledIds.has(defaultEngine) ? defaultEngine : "aws-lex",
-    engines
-  });
-});
-
-app.get("/api/suggestions", async (req, res) => {
+async function proxyToLambda(req, res) {
   try {
-    const slot = (req.query?.slot || "").toString();
-    const region = process.env.AWS_REGION;
-    if (!region) return res.status(400).json({ error: "AWS_REGION is required" });
+    const { statusCode, body, cookies } = await invokeChatApi({
+      method:  req.method,
+      path:    req.path,
+      query:   req.query  || {},
+      body:    ["POST", "PUT", "PATCH"].includes(req.method) ? req.body : null,
+      cookies: req.cookies || {},
+    });
 
-    const suggestions = await getSuggestions({ slot, env: process.env, region });
-    res.json({ slot, suggestions });
+    if (Array.isArray(cookies)) {
+      cookies.forEach((c) => res.setHeader("Set-Cookie", c));
+    }
+    res.status(statusCode).json(body);
   } catch (err) {
-    res.status(500).json({ error: err?.message || String(err) });
-  }
-});
-
-app.post("/api/chat", async (req, res) => {
-  try {
-    const text = (req.body?.text || "").toString().trim();
-    const requestedEngine = (req.body?.engine || process.env.DEFAULT_AI_ENGINE || "aws-lex").toString().trim();
-    const enabledEngines = getEnabledEngines();
-    const enabledIds = new Set(enabledEngines.map((engine) => engine.key));
-    const engine = enabledIds.has(requestedEngine) ? requestedEngine : "aws-lex";
-    if (!text) return res.status(400).json({ error: "text is required" });
-
-    // sessionId: body 우선 -> cookie -> 생성
-    const provided = (req.body?.sessionId || "").toString().trim();
-    const cookieSid = (req.cookies?.lex_session_id || "").toString().trim();
-    const sessionId = provided || cookieSid || `web-${nanoid(10)}`;
-
-    if (engine !== "aws-lex") {
-      const out = await chatWithOnPremEngine({ text, sessionId, engine });
-      res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
-      return res.json(out);
-    }
-
-    const localReservationFlowEnabled = (process.env.ENABLE_LOCAL_RESERVATION_FLOW || "").toLowerCase() === "true";
-    if (localReservationFlowEnabled) {
-      const reservationOut = await runReservationFlow({
-        text,
-        sessionId,
-        getSuggestions: async (slot) =>
-          getSuggestions({ slot, env: process.env, region: process.env.AWS_REGION })
-      });
-
-      if (reservationOut) {
-        res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
-        return res.json({ ...reservationOut, engine });
-      }
-    }
-
-    const raw = await recognizeText({ text, sessionId });
-    const out = formatLexResponse({ raw, sessionId });
-    
-    // Quick replies 자동 주입: ElicitSlot일 때
-    if (out?.ui?.mode === "elicit_slot" && out.ui.slotToElicit) {
-      const slot = out.ui.slotToElicit;
-      const suggestions = await getSuggestions({ slot, env: process.env, region: process.env.AWS_REGION });
-      if (suggestions.length) out.ui.quickReplies = suggestions.slice(0, 8);
-    }
-
-    // cookie에 세션 저장(웹 UX 편의)
-    res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
-
-    res.json({ ...out, engine });
-  } catch (err) {
-    res.status(500).json({
-      error: err?.message || String(err),
-      hint: "AWS_REGION / LEX_BOT_ID / LEX_BOT_ALIAS_ID / (옵션) LEX_LOCALE_ID 환경변수와 AWS 자격증명 설정을 확인하세요."
+    console.error("[proxy] Lambda 호출 실패:", err.message);
+    res.status(502).json({
+      error: err.message || String(err),
+      hint:  `Lambda 함수(${FUNCTION_NAME}) 호출에 실패했습니다. AWS 자격증명 및 CHAT_API_FUNCTION_NAME 확인`,
     });
   }
-});
+}
+
+app.get( "/api/health",      proxyToLambda);
+app.get( "/api/engines",     proxyToLambda);
+app.get( "/api/suggestions", proxyToLambda);
+app.post("/api/chat",        proxyToLambda);
 
 const port = Number(process.env.PORT || 3000);
 app.listen(port, () => {
   console.log(`[lex-chat-ux] API server listening on http://localhost:${port}`);
-  console.log(`[lex-chat-ux] Frontend (Quasar) should be on http://localhost:9000`);
+  console.log(`[lex-chat-ux] → Lambda: ${FUNCTION_NAME} (region: ${process.env.AWS_REGION || "ap-northeast-2"})`);
+  console.log(`[lex-chat-ux] Frontend (Quasar): http://localhost:9000`);
 });

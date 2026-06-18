@@ -1,79 +1,40 @@
+"use strict";
+/**
+ * AWS Lambda SDK 호출 클라이언트
+ * chatbot-api Lambda 함수를 InvokeCommand 로 호출합니다.
+ */
+
 const { LambdaClient, InvokeCommand } = require("@aws-sdk/client-lambda");
 
-function requireEnv(name) {
-  const v = process.env[name];
-  if (!v) throw new Error(`${name} 환경변수가 필요합니다.`);
-  return v;
-}
+const region       = process.env.AWS_REGION              || "ap-northeast-2";
+const FUNCTION_NAME = process.env.CHAT_API_FUNCTION_NAME || "chatbot-api";
 
-function getClient() {
-  const region = requireEnv("AWS_REGION");
-  return new LambdaClient({ region });
-}
+const lambdaClient = new LambdaClient({ region });
 
-async function invokeReservationFulfillment({ text, sessionId, extra = {} }) {
-  const client = getClient();
-
-  const functionName =
-    process.env.LAMBDA_FUNCTION_NAME ||
-    "arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment";
-
-  // Lambda로 넘길 payload
-  const payload = {
-    text,
-    sessionId,
-    ...extra
+async function invokeChatApi({ method, path, query, body, cookies }) {
+  const event = {
+    requestContext: { http: { method: method.toUpperCase(), path } },
+    queryStringParameters: query   || {},
+    body:    body    ? JSON.stringify(body) : null,
+    cookies: Object.entries(cookies || {}).map(([k, v]) => `${k}=${v}`),
+    headers: {},
   };
 
-  const cmd = new InvokeCommand({
-    FunctionName: functionName,
-    InvocationType: "RequestResponse", // 동기 호출
-    Payload: Buffer.from(JSON.stringify(payload)),
+  const cmd    = new InvokeCommand({
+    FunctionName:   FUNCTION_NAME,
+    InvocationType: "RequestResponse",
+    Payload:        JSON.stringify(event),
   });
 
-  const res = await client.send(cmd);
+  const res     = await lambdaClient.send(cmd);
+  const result  = JSON.parse(Buffer.from(res.Payload).toString("utf8"));
 
-  // 함수 에러 처리
-  if (res.FunctionError) {
-    const errText = res.Payload
-      ? Buffer.from(res.Payload).toString("utf8")
-      : "Lambda function error";
-    throw new Error(`Lambda 호출 실패: ${errText}`);
-  }
-
-  // Payload 파싱
-  const rawText = res.Payload
-    ? Buffer.from(res.Payload).toString("utf8")
-    : "{}";
-
-  let parsed;
-  try {
-    parsed = JSON.parse(rawText);
-  } catch {
-    parsed = { raw: rawText };
-  }
-
-  // API Gateway 프록시 형식 대응
-  if (parsed && typeof parsed === "object" && "statusCode" in parsed) {
-    let body = parsed.body;
-    if (typeof body === "string") {
-      try {
-        body = JSON.parse(body);
-      } catch {
-        // 문자열 그대로 사용
-      }
-    }
-
-    if (parsed.statusCode >= 400) {
-      throw new Error(
-        typeof body === "string" ? body : JSON.stringify(body)
-      );
-    }
-
-    return body;
-  }
-
-  return parsed;
+  return {
+    statusCode: result.statusCode || 200,
+    headers:    result.headers    || {},
+    body:       typeof result.body === "string" ? JSON.parse(result.body) : (result.body ?? {}),
+    cookies:    result.cookies    || [],
+  };
 }
 
-module.exports = { invokeReservationFulfillment };
+module.exports = { invokeChatApi, FUNCTION_NAME };

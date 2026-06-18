@@ -1,110 +1,45 @@
 version: "3.9"
 
 # =============================================================
-# 챗봇 웹앱 — Rasa ML NLU 엔진 통합 스택
+# 챗봇 웹앱 스택
 #
-# 실행 순서:
-#   1. rasa-train   : 모델 없을 때만 학습 (완료 후 종료)
-#   2. rasa-actions : Python 커스텀 액션 서버 (:5055)
-#   3. rasa         : Rasa NLU/Core 서버 (:5005)
-#   4. rasa-adapter : Node.js REST 어댑터 (:3300)
-#   5. webapp       : Quasar 프론트엔드 + Express API (:9000 / :3000)
+# 서비스:
+#   1. ollama-adapter : Node.js REST 어댑터 (:3200) → Windows Ollama (host:11434)
+#   2. webapp         : Quasar 프론트엔드 (:9000)
+#                       /api/* → API Gateway → chatbot-api Lambda → Lex V2
 #
 # 시작:
 #   docker compose up --build
 #
 # 브라우저:
-#   http://localhost:9000  →  챗봇 UI (엔진 선택: Rasa)
+#   http://localhost:9000
 # =============================================================
 
 services:
 
   # -----------------------------------------------------------
-  # 1. Rasa 모델 학습 (models/ 에 모델이 없을 때만 실행)
+  # 1. Ollama Node.js 어댑터 (프론트 ↔ Ollama 포맷 변환)
+  #    Ollama는 Windows 호스트에서 실행 중 (host.docker.internal:11434)
   # -----------------------------------------------------------
-  rasa-train:
-    image: rasa/rasa:3.6.21-full
-    user: root
-    volumes:
-      - ./rasa:/app
-      - rasa_models:/models
-    working_dir: /app
-    entrypoint: ["/bin/bash", "/app/train-if-needed.sh"]
-    restart: "no"
-    networks:
-      - chatbot-net
-
-  # -----------------------------------------------------------
-  # 2. Rasa 커스텀 액션 서버 (Python)
-  # -----------------------------------------------------------
-  rasa-actions:
-    build:
-      context: ./rasa
-      dockerfile: Dockerfile.actions
-    ports:
-      - "5055:5055"
-    restart: unless-stopped
-    networks:
-      - chatbot-net
-
-  # -----------------------------------------------------------
-  # 3. Rasa NLU/Core 서버
-  # -----------------------------------------------------------
-  rasa:
-    build:
-      context: ./rasa
-      dockerfile: Dockerfile
-    user: root
-    volumes:
-      - rasa_models:/app/models
-    environment:
-      - RASA_TELEMETRY_ENABLED=false
-    depends_on:
-      rasa-train:
-        condition: service_completed_successfully
-      rasa-actions:
-        condition: service_started
-    ports:
-      - "5005:5005"
-    restart: unless-stopped
-    networks:
-      - chatbot-net
-    command: >
-      run
-      --enable-api
-      --cors *
-      --endpoints endpoints.yml
-      --credentials credentials.yml
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:5005/ || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 12
-      start_period: 60s
-
-  # -----------------------------------------------------------
-  # 4. Rasa Node.js 어댑터 (프론트 ↔ Rasa 포맷 변환)
-  # -----------------------------------------------------------
-  rasa-adapter:
+  ollama-adapter:
     image: node:20-alpine
     working_dir: /app
     volumes:
-      - ./rasa/server:/app
+      - ./ollama/server:/app
     environment:
-      - RASA_BASE_URL=http://rasa:5005
-      - PORT=3300
-    depends_on:
-      rasa:
-        condition: service_healthy
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=exaone3.5
+      - PORT=3200
     ports:
-      - "3300:3300"
+      - "3200:3200"
     restart: unless-stopped
     networks:
       - chatbot-net
     command: sh -c "npm install && node index.js"
 
   # -----------------------------------------------------------
-  # 5. 웹앱 (Quasar 프론트엔드 :9000 + Express API :3000)
+  # 2. 웹앱 (Quasar 프론트엔드 :9000)
+  #    /api/* → API Gateway → chatbot-api Lambda
   # -----------------------------------------------------------
   webapp:
     build:
@@ -112,31 +47,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "9000:9000"    # Quasar dev server (브라우저 접속)
-      - "3000:3000"    # Express API server
-    volumes:
-      - /root/.aws:/root/.aws:ro
-    env_file:
-      - path: .env     # AWS/Azure 자격증명 등
-        required: false  # .env 없어도 시작 가능 (Rasa만 쓸 경우 불필요)
     environment:
-      - PORT=3000
-      - DEFAULT_AI_ENGINE=rasa
-      - ENABLED_AI_ENGINES=rasa,aws-lex,azure-clu,ollama
-      - RASA_SERVER_URL=http://rasa-adapter:3300
-      - AZURE_SERVER_URL=http://azure-clu:3100
-      - OLLAMA_SERVER_URL=http://ollama-adapter:3200
-    depends_on:
-      - rasa-adapter
+      - API_GATEWAY_URL=https://4f4hd52bf0.execute-api.ap-northeast-2.amazonaws.com
     restart: unless-stopped
     networks:
       - chatbot-net
 
 # =============================================================
-# 네트워크 & 볼륨
+# 네트워크
 # =============================================================
 networks:
   chatbot-net:
     driver: bridge
-
-volumes:
-  rasa_models:    # 학습된 모델 영구 보관 (재시작 시 재학습 없음)

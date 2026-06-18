@@ -2,59 +2,80 @@ version: "3.1"
 
 stories:
 
-  - story: 인사 후 예약 흐름
+  - story: 인사 후 상담예약 흐름
     steps:
       - intent: greet
       - action: utter_greet
-      - intent: make_reservation
-      - action: reservation_form
-      - active_loop: reservation_form
+      - intent: book_consultation
+      - action: consultation_form
+      - active_loop: consultation_form
       - active_loop: null
-      - action: action_complete_reservation
+      - action: action_complete_consultation
 
-  - story: 지점 포함 예약 흐름
+  - story: 지점+상품 포함 예약 흐름
     steps:
-      - intent: make_reservation
+      - intent: book_consultation
         entities:
-          - branch: 강남점
-      - action: reservation_form
-      - active_loop: reservation_form
+          - branch: 여의도지점
+          - product: ETF
+      - action: consultation_form
+      - active_loop: consultation_form
       - active_loop: null
-      - action: action_complete_reservation
+      - action: action_complete_consultation
 
-  - story: 과정 정보 조회 후 예약
+  - story: 상품 안내 후 예약
     steps:
-      - intent: ask_course_info
-      - action: utter_course_info
-      - intent: make_reservation
-      - action: reservation_form
-      - active_loop: reservation_form
+      - intent: product_info
+      - action: utter_product_info
+      - intent: book_consultation
+      - action: consultation_form
+      - active_loop: consultation_form
       - active_loop: null
-      - action: action_complete_reservation
+      - action: action_complete_consultation
 
-  - story: 지점 정보 조회 후 예약
+  - story: 도움말 후 예약
     steps:
-      - intent: ask_branch_info
-      - action: utter_branch_info
-      - intent: make_reservation
-      - action: reservation_form
-      - active_loop: reservation_form
+      - intent: help
+      - action: utter_help
+      - intent: book_consultation
+      - action: consultation_form
+      - active_loop: consultation_form
       - active_loop: null
-      - action: action_complete_reservation
+      - action: action_complete_consultation
 
-  - story: 예약 확인 후 취소
+  - story: 예약 후 조회
     steps:
-      - intent: check_reservation
-      - action: action_check_reservation
-      - intent: cancel_reservation
-      - action: action_cancel_reservation
+      - intent: book_consultation
+      - action: consultation_form
+      - active_loop: consultation_form
+      - active_loop: null
+      - action: action_complete_consultation
+      - intent: check_consultation
+      - action: action_check_consultation
+
+  - story: 예약 후 취소
+    steps:
+      - intent: book_consultation
+      - action: consultation_form
+      - active_loop: consultation_form
+      - active_loop: null
+      - action: action_complete_consultation
+      - intent: cancel_consultation
+      - action: action_cancel_consultation
+
+  - story: 상품 안내 후 도움말
+    steps:
+      - intent: product_info
+      - action: utter_product_info
+      - intent: help
+      - action: utter_help
 
   - story: 예약 후 작별 인사
     steps:
-      - intent: make_reservation
-      - action: reservation_form
-      - active_loop: reservation_form
+      - intent: book_consultation
+      - action: consultation_form
+      - active_loop: consultation_form
       - active_loop: null
-      - action: action_complete_reservation
+      - action: action_complete_consultation
       - intent: goodbye
       - action: utter_goodbye

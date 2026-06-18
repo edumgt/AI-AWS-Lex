@@ -44,10 +44,13 @@ app.post("/chat", async (req, res) => {
       return res.status(400).json({ error: "text가 비어있습니다." });
     }
 
-    const { messages, raw } = await sendMessage({ text, sessionId });
+    const { messages, intent, state, slots, raw } = await sendMessage({ text, sessionId });
 
     res.json({
       messages,
+      intent,
+      state,
+      slots,
       sessionId,
       platform: "rasa",
       raw

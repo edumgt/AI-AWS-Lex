@@ -5,7 +5,7 @@
   "type": "commonjs",
   "main": "server/index.js",
   "scripts": {
-    "dev": "concurrently \"quasar dev\" \"node server/index.js\"",
+    "dev": "quasar dev",
     "build": "quasar build",
     "start": "node server/index.js",
     "server": "node server/index.js"
@@ -22,23 +22,25 @@
     "nanoid": "^5.0.7",
     "pinia": "^2.1.7",
     "quasar": "^2.14.1",
+    "vite": "^2.9.18",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@quasar/app-vite": "^1.7.3",
-    "@vitejs/plugin-vue": "^5.0.3",
     "autoprefixer": "^10.4.17",
     "concurrently": "^8.2.2",
     "playwright": "^1.59.1",
     "postcss": "^8.4.33",
     "sass": "^1.70.0",
-    "tailwindcss": "^3.4.1",
-    "vite": "^5.0.12"
+    "tailwindcss": "^3.4.1"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
+  },
+  "overrides": {
+    "vite": "2.9.18"
   }
 }

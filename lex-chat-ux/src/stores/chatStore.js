@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
+// Quasar dev proxy(/api → Express:3000 → Lambda SDK) 경로 사용
+// VITE_API_BASE_URL 설정 시 Lambda URL 직접 호출 (계정 SCP 허용 환경)
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+const apiGet  = (path, params) => axios.get(`${API_BASE}${path}`, { params });
+const apiPost = (path, data)   => axios.post(`${API_BASE}${path}`, data);
+
 function normalizeEngineId(engine) {
   if (typeof engine === 'string') return engine;
   if (engine && typeof engine === 'object') {
@@ -32,7 +39,7 @@ export const useChatStore = defineStore('chat', {
 
     async loadEngines() {
       try {
-        const response = await axios.get('/api/engines');
+        const response = await apiGet('/api/engines');
         const data = response.data;
         
         this.availableEngines = (Array.isArray(data.engines) ? data.engines : [])
@@ -69,7 +76,7 @@ export const useChatStore = defineStore('chat', {
       try {
         const engineId = normalizeEngineId(this.selectedEngine) || 'aws-lex';
 
-        const response = await axios.post('/api/chat', {
+        const response = await apiPost('/api/chat', {
           text,
           sessionId: this.sessionId,
           engine: engineId

@@ -51,7 +51,7 @@ const handleClick = () => {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 2000;
+  z-index: 9100;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }

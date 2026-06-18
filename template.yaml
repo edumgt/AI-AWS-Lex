@@ -1,0 +1,161 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Chatbot API — Lambda + API Gateway HTTP API
+  GET /api/health · GET /api/engines · GET /api/suggestions · POST /api/chat
+
+# ── 파라미터 ───────────────────────────────────────────────────────────────────
+Parameters:
+  LexBotId:
+    Type: String
+    Default: VP2C22LIIZ
+  LexBotAliasId:
+    Type: String
+    Default: WLCO3AVN1Z
+  LexLocaleId:
+    Type: String
+    Default: ko_KR
+  DefaultAiEngine:
+    Type: String
+    Default: aws-lex
+    AllowedValues: [aws-lex, azure-clu, ollama, rasa, openai-compatible]
+  EnabledAiEngines:
+    Type: String
+    Default: aws-lex
+  EnableLocalReservationFlow:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+
+# ── 공통 설정 ──────────────────────────────────────────────────────────────────
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    MemorySize: 256
+    Timeout: 29
+    Architectures: [arm64]
+    Environment:
+      Variables:
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
+
+# ── 리소스 ────────────────────────────────────────────────────────────────────
+Resources:
+
+  # API Gateway HTTP API (CORS 포함)
+  ChatHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "content-type"
+          - "cookie"
+          - "authorization"
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        MaxAge: 300
+
+  # Lambda 실행 역할
+  ChatApiFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: LexAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lex:RecognizeText
+                  - lex:GetSession
+                  - lex:PutSession
+                  - lex:DeleteSession
+                Resource: !Sub "arn:aws:lex:${AWS::Region}:${AWS::AccountId}:bot-alias/*/*"
+              - Effect: Allow
+                Action:
+                  - lex:ListSlotTypes
+                  - lex:DescribeSlotType
+                Resource: !Sub "arn:aws:lex:${AWS::Region}:${AWS::AccountId}:bot/${LexBotId}/*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
+  # 챗봇 API Lambda 함수
+  ChatApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "chatbot API — /api/health /api/engines /api/suggestions /api/chat"
+      Role: !GetAtt ChatApiFunctionRole.Arn
+      CodeUri: lex-chat-ux/
+      Handler: server/lambda.handler
+      Events:
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            ApiId: !Ref ChatHttpApi
+        ApiRoot:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+            ApiId: !Ref ChatHttpApi
+      Environment:
+        Variables:
+          LEX_BOT_ID: !Ref LexBotId
+          LEX_BOT_ALIAS_ID: !Ref LexBotAliasId
+          LEX_LOCALE_ID: !Ref LexLocaleId
+          DEFAULT_AI_ENGINE: !Ref DefaultAiEngine
+          ENABLED_AI_ENGINES: !Ref EnabledAiEngines
+          ENABLE_LOCAL_RESERVATION_FLOW: !Ref EnableLocalReservationFlow
+          BRANCH_VALUES: "강남WM센터,여의도지점,압구정PB센터,종로지점,판교지점"
+          PRODUCT_VALUES: "국내주식,해외주식,ETF,ELS,채권,펀드,ISA,연금저축"
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: false
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - server/lambda.js
+        External:
+          - "@aws-sdk/client-lex-runtime-v2"
+          - "@aws-sdk/client-lex-models-v2"
+
+  # CloudWatch 로그 그룹
+  ChatApiFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ChatApiFunction}"
+      RetentionInDays: 14
+
+# ── 출력 ──────────────────────────────────────────────────────────────────────
+Outputs:
+  ApiGatewayUrl:
+    Description: "API Gateway URL — FE proxy 또는 VITE_API_BASE_URL로 설정"
+    Value: !Sub "https://${ChatHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+
+  ChatApiFunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt ChatApiFunction.Arn
+
+  HealthCheckUrl:
+    Description: 헬스체크 엔드포인트
+    Value: !Sub "https://${ChatHttpApi}.execute-api.${AWS::Region}.amazonaws.com/api/health"

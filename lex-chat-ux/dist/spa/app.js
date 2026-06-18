@@ -1,0 +1,293 @@
+(function () {
+  const $chat = document.getElementById("chat");
+  const $chips = document.getElementById("chips");
+  const $input = document.getElementById("input");
+  const $send = document.getElementById("sendBtn");
+  const $sessionLabel = document.getElementById("sessionLabel");
+  const $newSession = document.getElementById("newSessionBtn");
+  const $summary = document.getElementById("summary");
+  const $engineSelect = document.getElementById("engineSelect");
+
+  const LS_KEY = "lex_chat_ux_v2_state";
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
+    catch (_) { return {}; }
+  }
+  function saveState(patch) {
+    const s = loadState();
+    const next = { ...s, ...patch, updatedAt: Date.now() };
+    localStorage.setItem(LS_KEY, JSON.stringify(next));
+    return next;
+  }
+
+  function getSessionId() {
+    return loadState().sessionId || "";
+  }
+  function setSessionId(id) {
+    saveState({ sessionId: id });
+    $sessionLabel.textContent = id ? `session: ${id}` : "session: (new)";
+  }
+
+  function getHistory() {
+    return loadState().history || [];
+  }
+  function setHistory(history) {
+    saveState({ history });
+  }
+
+  function getLastSummary() {
+    return loadState().summary || [];
+  }
+  function setLastSummary(summary) {
+    saveState({ summary });
+  }
+
+  function getSelectedEngine() {
+    return loadState().engine || "aws-lex";
+  }
+  function setSelectedEngine(engine) {
+    saveState({ engine });
+    if ($engineSelect) $engineSelect.value = engine;
+  }
+
+  function newSession() {
+    setSessionId("");
+    setHistory([]);
+    setLastSummary([]);
+    $chat.innerHTML = "";
+    $chips.innerHTML = "";
+    renderSummary([]);
+    addBot(“새 세션을 시작했어요. 예) \”여의도지점 ETF 투자상담 예약하고 싶어요\””);
+    $input.focus();
+    setInputUx({ mode: "message" });
+  }
+
+  function scrollToBottom() {
+    $chat.scrollTop = $chat.scrollHeight;
+  }
+
+  function bubble(role, text, meta) {
+    const row = document.createElement("div");
+    row.className = `row ${role}`;
+    const b = document.createElement("div");
+    b.className = `bubble ${role}`;
+    b.textContent = text;
+    if (meta) {
+      const small = document.createElement("span");
+      small.className = "small";
+      small.textContent = meta;
+      b.appendChild(small);
+    }
+    row.appendChild(b);
+    $chat.appendChild(row);
+    scrollToBottom();
+    return row;
+  }
+
+  function addUser(text) {
+    bubble("user", text);
+    const history = [...getHistory(), { role: "user", text, ts: Date.now() }];
+    setHistory(history);
+  }
+  function addBot(text, meta) {
+    bubble("bot", text, meta);
+    const history = [...getHistory(), { role: "bot", text, meta: meta || "", ts: Date.now() }];
+    setHistory(history);
+  }
+
+  function showTyping() {
+    const row = document.createElement("div");
+    row.className = "row bot";
+    const b = document.createElement("div");
+    b.className = "bubble bot";
+    const t = document.createElement("div");
+    t.className = "typing";
+    t.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:8px">응답 중...</span>';
+    b.appendChild(t);
+    row.appendChild(b);
+    $chat.appendChild(row);
+    scrollToBottom();
+    return row;
+  }
+
+  function setChips(list) {
+    $chips.innerHTML = "";
+    (list || []).forEach(label => {
+      const c = document.createElement("button");
+      c.className = "chip";
+      c.type = "button";
+      c.textContent = label;
+      c.addEventListener("click", () => {
+        $input.value = label;
+        $input.focus();
+      });
+      $chips.appendChild(c);
+    });
+  }
+
+  function renderSummary(summaryItems) {
+    $summary.innerHTML = "";
+    const items = (summaryItems && summaryItems.length) ? summaryItems : [];
+    const defaultKeys = ["지점","상품","날짜","시간","고객명","연락처","예약번호"];
+    const normalized = items.length ? items : defaultKeys.map(l => ({ label: l, value: null }));
+
+    normalized.forEach(it => {
+      const pill = document.createElement("div");
+      pill.className = "pill" + (it.value ? "" : " empty");
+      pill.innerHTML = `<span class="k">${escapeHtml(it.label)}</span><span class="v">${escapeHtml(it.value || "—")}</span>`;
+      $summary.appendChild(pill);
+    });
+  }
+
+  function escapeHtml(s) {
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function setInputUx(ui) {
+    const mode = ui?.mode || "message";
+    const slot = ui?.slotToElicit || "";
+
+    $input.type = "text";
+    $input.inputMode = "text";
+    $input.placeholder = ui?.placeholder || "메시지를 입력하세요...";
+    $input.maxLength = 200;
+
+    if (mode === "elicit_slot") {
+      if (slot === "PhoneNumber") {
+        $input.type = "tel";
+        $input.inputMode = "tel";
+        $input.placeholder = ui?.placeholder || "010-1234-5678";
+        $input.maxLength = 13;
+      } else if (slot === "Time") {
+        $input.type = "time";
+        $input.inputMode = "numeric";
+        $input.placeholder = ui?.placeholder || "19:30";
+      } else if (slot === "Date") {
+        $input.type = "date";
+        $input.inputMode = "numeric";
+        $input.placeholder = ui?.placeholder || "2026-02-10";
+      } else {
+        $input.type = "text";
+        $input.inputMode = "text";
+      }
+    } else if (mode === "confirm_intent") {
+      $input.placeholder = "네/아니요로 답하거나 내용을 수정해 주세요";
+    }
+  }
+
+  function formatPhone(value) {
+    const digits = (value || "").replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 7) return `${digits.slice(0,3)}-${digits.slice(3)}`;
+    return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
+  }
+
+  $input.addEventListener("input", () => {
+    if ($input.type === "tel") {
+      const before = $input.value;
+      const after = formatPhone(before);
+      if (before !== after) $input.value = after;
+    }
+  });
+
+  async function send(text) {
+    const sessionId = getSessionId();
+    const engine = getSelectedEngine();
+    const typingRow = showTyping();
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, sessionId, engine })
+    }).then(r => r.json());
+
+    typingRow.remove();
+
+    if (res.error) {
+      addBot(`에러: ${res.error}`, res.hint || "");
+      return;
+    }
+
+    if (!sessionId && res.sessionId) setSessionId(res.sessionId);
+
+    if (Array.isArray(res.summary)) {
+      setLastSummary(res.summary);
+      renderSummary(res.summary);
+    }
+
+    const msgs = (res.messages && res.messages.length) ? res.messages : [res.ui?.prompt].filter(Boolean);
+    const meta = [res.engine || engine, res.intent, res.state].filter(Boolean).join(" · ");
+    msgs.forEach(m => addBot(m, meta));
+
+    setInputUx(res.ui);
+
+    if (res.ui?.mode === "elicit_slot") {
+      const quick = res.ui.quickReplies || [];
+      setChips(quick);
+    } else if (res.ui?.mode === "confirm_intent") {
+      setChips(res.ui.quickReplies || ["네", "아니요"]);
+    } else {
+      setChips([]);
+    }
+  }
+
+  function onSend() {
+    const text = ($input.value || "").trim();
+    if (!text) return;
+    $input.value = "";
+    addUser(text);
+    send(text).catch(err => addBot(`에러: ${err.message || err}`));
+  }
+
+  async function loadEngines() {
+    try {
+      const data = await fetch("/api/engines").then(r => r.json());
+      const engines = Array.isArray(data.engines) ? data.engines : [];
+      const preferred = getSelectedEngine() || data.defaultEngine || "aws-lex";
+
+      $engineSelect.innerHTML = "";
+      engines.forEach((e) => {
+        const opt = document.createElement("option");
+        opt.value = e.key;
+        opt.textContent = e.label;
+        $engineSelect.appendChild(opt);
+      });
+
+      const selectable = engines.some(e => e.key === preferred) ? preferred : (data.defaultEngine || "aws-lex");
+      setSelectedEngine(selectable);
+    } catch (_) {
+      $engineSelect.innerHTML = '<option value="aws-lex">AWS Lex (Managed)</option>';
+      setSelectedEngine("aws-lex");
+    }
+  }
+
+  function restore() {
+    setSessionId(getSessionId());
+    const history = getHistory();
+    if (history.length) {
+      $chat.innerHTML = "";
+      history.forEach(m => bubble(m.role, m.text, m.meta));
+    } else {
+      addBot(“안녕하세요! KF증권 AI 투자상담입니다. 예) \”여의도지점 ETF 투자상담 예약하고 싶어요\””);
+    }
+    renderSummary(getLastSummary());
+  }
+
+  restore();
+  loadEngines();
+
+  $engineSelect.addEventListener("change", (e) => {
+    setSelectedEngine((e.target.value || "aws-lex").trim());
+  });
+  $send.addEventListener("click", onSend);
+  $input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") onSend();
+  });
+  $newSession.addEventListener("click", newSession);
+})();

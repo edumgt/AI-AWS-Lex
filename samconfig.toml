@@ -1,0 +1,32 @@
+version = 0.1
+
+# 기본 환경 — ap-northeast-2 (서울)
+[default]
+
+[default.global.parameters]
+stack_name    = "chatbot-api"
+region        = "ap-northeast-2"
+
+[default.build.parameters]
+use_container = false   # esbuild 로컬 설치 필요: npm i -g esbuild
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities       = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+confirm_changeset  = false
+resolve_s3         = true
+region             = "ap-northeast-2"
+parameter_overrides = [
+  "LexBotId=VP2C22LIIZ",
+  "LexBotAliasId=WLCO3AVN1Z",
+  "LexLocaleId=ko_KR",
+  "DefaultAiEngine=aws-lex",
+  "EnabledAiEngines=aws-lex",
+  "EnableLocalReservationFlow=false",
+  "CorsOrigin=*"
+]
+
+[default.sync.parameters]
+watch = true

@@ -6,5 +6,10 @@ node_modules/
 # Rasa 학습된 모델 (용량 크므로 직접 학습 필요)
 rasa/models/
 
-# Lambda 로컬 빌드 아티팩트
+# Lambda / SAM 빌드 아티팩트
 .hello_api_build/
+.aws-sam/
+samconfig.toml.bak
+dist-lambda/
+sam-installation/
+rasa/
