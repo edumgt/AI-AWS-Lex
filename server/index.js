@@ -1,6 +1,10 @@
 const express = require("express");
 const http    = require("http");
 const { URL } = require("url");
+const { loadRuntimeEnv } = require("../shared/runtimeEnv");
+
+loadRuntimeEnv();
+
 const { recognizeText } = require("./lexClient");
 
 const app = express();

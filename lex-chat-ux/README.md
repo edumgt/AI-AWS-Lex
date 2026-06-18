@@ -36,9 +36,9 @@ docker run --rm -it \
 
 ## 주요 UX 기능
 - 슬롯별 추천 버튼(Quick Replies) 자동 생성  
-  - `.env`의 `BRANCH_VALUES`, `COURSE_VALUES`를 사용하거나  
+  - `.env`의 `BRANCH_VALUES`, `PRODUCT_VALUES`를 사용하거나  
   - (권한이 있으면) Lex Models API로 Bot의 SlotType(enum) 값을 읽어와 자동 생성
-- "현재까지 채운 값" 요약 카드(Branch/Course/Date/Time/Name/Phone)
+- "현재까지 채운 값" 요약 카드(Branch/Product/Date/Time/Customer/Phone)
 - 슬롯 타입에 따라 입력 폼 UX 변경  
   - Date: date 입력 UI  
   - Time: time 입력 UI  
@@ -71,7 +71,7 @@ docker run --rm -it \
 # 환경변수 설정
 cp infra/config.example.env infra/config.env
 # AWS_REGION, LEX_BOT_ID, LEX_BOT_ALIAS_ID, LEX_LOCALE_ID 설정
-# (옵션) BRANCH_VALUES, COURSE_VALUES 설정
+# (옵션) BRANCH_VALUES, PRODUCT_VALUES 설정
 # (옵션) DEFAULT_AI_ENGINE, ENABLED_AI_ENGINES 및 on-prem 엔드포인트 설정
 
 # 의존성 설치
@@ -121,7 +121,7 @@ lex-chat-ux/
 
 ## API
 - POST `/api/chat` : 선택 엔진으로 대화 처리 (`engine` 파라미터 지원)
-- GET  `/api/suggestions?slot=Branch|CourseName` : quick replies 후보 목록
+- GET  `/api/suggestions?slot=Branch|ProductType` : quick replies 후보 목록
 - GET  `/api/engines` : FE 엔진 셀렉터용 목록
 
 ### `/api/chat` 요청 예시

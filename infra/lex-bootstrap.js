@@ -131,7 +131,7 @@ async function waitLocaleBuilt(client, { botId, localeId }) {
     const res = await client.send(new DescribeBotLocaleCommand({ botId, botVersion: "DRAFT", localeId }));
     const status = res.botLocaleStatus;
     console.log(`  - locale status: ${status}`);
-    if (status === "Built") return;
+    if (status === "Built" || status === "ReadyExpressTesting") return;
     if (status === "Failed") {
       console.error(res);
       throw new Error("Locale build failed (see above).");
@@ -601,7 +601,7 @@ async function main() {
   const alphaNum = pickSupported(builtins, ["AMAZON.AlphaNumeric", "AMAZON.Number"], ["AMAZON.Text"]);
   if (!alphaNum) throw new Error("AMAZON.AlphaNumeric/Number built-in not found");
 
-  await upsertSlot(lex, { botId, localeId, intentId: checkIntentId, slotName: "ConsultationId", slotTypeId: alphaNum, required: false, prompt: "예약번호를 알려주세요. (예: C-ABCD12)" });
+  const checkSlotId = await upsertSlot(lex, { botId, localeId, intentId: checkIntentId, slotName: "ConsultationId", slotTypeId: alphaNum, required: false, prompt: "예약번호를 알려주세요. (예: C-ABCD12)" });
   await lex.send(new UpdateIntentCommand({
     botId, botVersion: "DRAFT", localeId,
     intentId: checkIntentId,
@@ -616,6 +616,9 @@ async function main() {
       "상담 예약 내역 확인",
       "예약 상태 알려줘"
     ].map(u => ({ utterance: u })),
+    slotPriorities: [
+      { priority: 1, slotId: checkSlotId }
+    ],
     fulfillmentCodeHook: { enabled: true }
   }));
   console.log("  - CheckConsultation updated OK");
@@ -631,7 +634,7 @@ async function main() {
   });
   assertId("CANCEL_INTENT_ID", cancelIntentId);
 
-  await upsertSlot(lex, { botId, localeId, intentId: cancelIntentId, slotName: "ConsultationId", slotTypeId: alphaNum, required: false, prompt: "취소할 예약번호를 알려주세요. (예: C-ABCD12)" });
+  const cancelSlotId = await upsertSlot(lex, { botId, localeId, intentId: cancelIntentId, slotName: "ConsultationId", slotTypeId: alphaNum, required: false, prompt: "취소할 예약번호를 알려주세요. (예: C-ABCD12)" });
   await lex.send(new UpdateIntentCommand({
     botId, botVersion: "DRAFT", localeId,
     intentId: cancelIntentId,
@@ -646,6 +649,9 @@ async function main() {
       "여의도지점 상담 예약 취소",
       "상담 예약 삭제해줘"
     ].map(u => ({ utterance: u })),
+    slotPriorities: [
+      { priority: 1, slotId: cancelSlotId }
+    ],
     fulfillmentCodeHook: { enabled: true }
   }));
   console.log("  - CancelConsultation updated OK");
@@ -662,7 +668,7 @@ async function main() {
   });
   assertId("PRODUCT_INFO_INTENT_ID", productInfoIntentId);
 
-  await upsertSlot(lex, { botId, localeId, intentId: productInfoIntentId, slotName: "ProductType", slotTypeId: productSlotTypeId, required: false, prompt: "어떤 상품이 궁금하세요? (예: ETF, 국내주식, 펀드, ELS, ISA)" });
+  const productInfoSlotId = await upsertSlot(lex, { botId, localeId, intentId: productInfoIntentId, slotName: "ProductType", slotTypeId: productSlotTypeId, required: false, prompt: "어떤 상품이 궁금하세요? (예: ETF, 국내주식, 펀드, ELS, ISA)" });
   await lex.send(new UpdateIntentCommand({
     botId, botVersion: "DRAFT", localeId,
     intentId: productInfoIntentId,
@@ -680,6 +686,9 @@ async function main() {
       "펀드 수익률 어떻게 봐?",
       "해외주식 환율 위험 있나요"
     ].map(u => ({ utterance: u })),
+    slotPriorities: [
+      { priority: 1, slotId: productInfoSlotId }
+    ],
     fulfillmentCodeHook: { enabled: true }
   }));
   console.log("  - ProductInfo updated OK");

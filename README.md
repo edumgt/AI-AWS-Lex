@@ -230,7 +230,10 @@
 │  └─ config.example.env
 │
 ├─ scripts/
-│  └─ seed-testcases.json         # 테스트 발화/기대 인텐트 시드
+│  ├─ seed-testcases.json         # 금융투자 상담 테스트 시나리오(단발+멀티턴)
+│  ├─ setup-finance-chatbot.sh    # Lambda 없이 챗봇/Lex 기본 구성
+│  ├─ setup-finance-intents.sh    # Lambda 없이 기존 봇 의도/슬롯 재반영
+│  └─ provision-finance-chatbot.sh # Lambda 배포 → Lex 생성 → seed 검증 일괄 실행
 │
 └─ postman/
    ├─ Lex-Lab.postman_collection.json
@@ -375,8 +378,15 @@ curl -s http://localhost:3000/chat \
 - `infra/config.example.env`를 `infra/config.env`로 복사 후 값 설정
 - 아래 중 하나 실행
   - `python3 infra/lex-bootstrap.py` (AWS CLI, Python / 권장)
-  - `bash infra/lex-bootstrap.sh` (AWS CLI, bash)
+  - `bash infra/lex-bootstrap.sh` (Python 스크립트 래퍼)
   - `node infra/lex-bootstrap.js` (AWS SDK)
+- `sh` 기준으로 먼저 실행하려면:
+  - `bash scripts/setup-finance-chatbot.sh`
+  - 의도/슬롯만 다시 반영하려면 `bash scripts/setup-finance-intents.sh`
+- 위 두 스크립트는 기본값으로 Lambda 단계를 건너뜁니다.
+- Lambda 생성/업데이트부터 테스트 검증까지 한 번에 반영하려면:
+  - `bash scripts/provision-finance-chatbot.sh`
+  - 새 Lambda를 만들어야 하는 경우 `LAMBDA_EXEC_ROLE_ARN`도 함께 설정
 - 생성 결과로 `BOT_ID`, `BOT_ALIAS_ID`를 받아 서버 환경변수에 반영
 
 자동 생성 상세는 `infra/README.md` 참고.
@@ -389,8 +399,8 @@ curl -s http://localhost:3000/chat \
 
 이 문서는 **대화 모델 설계 기준서**입니다.
 - 인텐트 목적/필수 슬롯/Fulfillment 연결 여부
-- `BranchType`, `CourseType` 같은 커스텀 슬롯 타입 예시
-- MakeReservation 슬롯 우선순위 설계 방향
+- `BranchType`, `ProductType` 같은 커스텀 슬롯 타입 예시
+- `BookConsultation` 슬롯 우선순위 설계 방향
 - 콘솔 체크리스트(빌드, Alias, Lambda 권한, 로그)
 
 즉, “어떤 봇을 어떻게 구성할지”에 대한 설계와 점검 항목을 제공합니다.
@@ -398,7 +408,7 @@ curl -s http://localhost:3000/chat \
 ### 7-2. `docs/utterances-100.md`
 
 이 문서는 **NLU 학습/검증용 샘플 발화 세트**입니다.
-- MakeReservation / CheckReservation / CancelReservation / CourseInfo / Help
+- BookConsultation / CheckConsultation / CancelConsultation / ProductInfo / Help
 - 각 Intent별 20개, 총 100개 문장
 - 콘솔 테스트 창 수동 검증 또는 대량 테스트 시나리오 작성에 유용
 
@@ -731,4 +741,3 @@ aws apigatewayv2 create-route \
 apigwinstall.sh 실행
 ```
 ![API GW 일괄 생성](./docs/assets/apigwinstall.png)
-

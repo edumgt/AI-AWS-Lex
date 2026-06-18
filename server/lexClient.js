@@ -1,4 +1,7 @@
 const { LexRuntimeV2Client, RecognizeTextCommand } = require("@aws-sdk/client-lex-runtime-v2");
+const { loadRuntimeEnv } = require("../shared/runtimeEnv");
+
+loadRuntimeEnv();
 
 function requireEnv(name) {
   const v = process.env[name];
@@ -6,9 +9,12 @@ function requireEnv(name) {
   return v;
 }
 
-const client = new LexRuntimeV2Client({ region: requireEnv("AWS_REGION") });
+function getClient() {
+  return new LexRuntimeV2Client({ region: requireEnv("AWS_REGION") });
+}
 
 async function recognizeText({ text, sessionId }) {
+  const client = getClient();
   const cmd = new RecognizeTextCommand({
     botId: requireEnv("LEX_BOT_ID"),
     botAliasId: requireEnv("LEX_BOT_ALIAS_ID"),
@@ -16,9 +22,7 @@ async function recognizeText({ text, sessionId }) {
     sessionId,
     text
   });
-
-  const res = await client.send(cmd);
-  return res;
+  return client.send(cmd);
 }
 
 module.exports = { recognizeText };

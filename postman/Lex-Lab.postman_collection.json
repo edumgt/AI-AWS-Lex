@@ -34,7 +34,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"text\": \"강남점 토익 예약하고 싶어요\",\n  \"sessionId\": \"demo-user-001\"\n}"
+          "raw": "{\n  \"text\": \"여의도지점 ETF 상담 예약하고 싶어요\",\n  \"sessionId\": \"demo-user-001\"\n}"
         },
         "url": {
           "raw": "{{BASE_URL}}/chat",

@@ -1,374 +1,227 @@
-[
-  {
-    "text": "무슨 기능이 있어?",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "예약번호 C-HELLO1 취소 요청",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "C-TEST01 예약 있나?",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "예약번호로 조회할게",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "예약번호가 기억 안나는데 마지막 상담 조회",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "내 상담 예약 취소해줘",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "ISA 계좌 혜택이 뭐야",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "ETF 상품 정보 알려줘",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "상담 예약을 취소할래",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "종로지점 ETF 7월 11일 14시로 예약",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "예약번호 C-HELLO1 상태 알려줘",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "취소 도와줘",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "C-12345 조회해줘",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "상담 예약 취소하고 싶어요",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "ELS 위험도 어때?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "여의도지점 ETF 상담 예약 가능해요?",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "연금저축 세액공제 얼마나 돼?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "상품 안내 받을 수 있어?",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "방금 예약한 거 확인해줘",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "강남WM센터 7월 12일 18시 국내주식 상담 예약",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "예약번호 C-XYZ99 취소",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "예약 조회는?",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "압구정PB센터 펀드 7월 14일 오전 10시 예약 가능?",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "해외주식 수수료 얼마야",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "상담 예약 만들기 도와줘",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "채권 투자 기간이 얼마나 돼?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "내 상담 예약 확인 가능해?",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "상담 예약 조회해줘",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "압구정PB센터 ELS 상담 예약해줘, 내 이름 김도영",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "상담 예약 내역 확인",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "예약 정보 다시 보내줘",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "해외주식 환율 위험 있나요",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "사용법 설명해줘",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "예약 확인 도와줘",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "판교지점 연금저축 7월 13일 10시 예약해줘",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "강남WM센터 국내주식 상담 예약, 이름 김도영",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "기능 설명",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "여의도지점 예약 확인하고 싶어",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "강남WM센터 예약 조회 가능?",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "종로지점 ISA 예약하고 싶고 이름은 김도영이야",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "여의도지점 ETF 상담 예약하고 싶어요",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "ETF 분배금 언제 받아?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "압구정PB센터 예약 취소해주세요",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "어떤 질문 할 수 있어?",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "국내주식 주문 방법 알려줘",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "강남WM센터 상담 예약 취소",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "마지막 상담 예약 취소해줘",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "C-TEST01 취소해",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "취소 상태 확인",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "지난번 투자상담 예약 조회해줘",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "강남WM센터 채권 7월 15일 오후 2시 예약해",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "판교지점 연금저축 상담 예약할래",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "예시 문장 알려줘",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "상담 예약 삭제해줘",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "가능한 요청 목록",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "도움말",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "여의도지점 해외주식 상담 예약, 전화 010-1234-5678",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "상담 예약 상태 알려줘",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "ELS 조기상환 조건 설명해줘",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "투자상담 받을 수 있어?",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "판교지점 예약 취소할래요",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "C-ABCD12 취소해줘",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "예약번호 C-XYZ99 확인",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "C-ABCD12 예약 조회",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "압구정PB센터 ELS 상담 예약 잡아줘",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "메뉴 알려줘",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "여의도지점 예약 취소 부탁",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "상담 예약 확인 부탁",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "ISA 서민형 가입 조건이 뭐야?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "판교지점 연금저축 상담 예약, 연락처는 01012345678",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "사용 방법",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "C-12345 예약 취소",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "투자상담 예약은 어떻게 해?",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "펀드 보수 얼마야?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "종로지점 예약 취소하고 싶다",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "뭐라고 말하면 돼?",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "취소 처리 됐는지 알려줘",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "내 마지막 상담 예약 내용 뭐야?",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "상담 예약 취소 방법 알려줘",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "채권 만기 수익률 어떻게 계산해?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "해외주식 세금 어떻게 돼?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "강남WM센터 ISA 투자상담 예약이요",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "해외주식 환전 비용 있어?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "판교지점 펀드 상담 예약해줘",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "ETF 종류가 어떻게 돼?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "종로지점 채권 상담 예약 할 수 있어?",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "강남WM센터 국내주식 레벨 상담 예약하고 싶어요",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "투자상담 예약 도와줘",
-    "expectedIntent": "Help"
-  },
-  {
-    "text": "내 상담 예약이 접수됐는지 확인해줘",
-    "expectedIntent": "CheckConsultation"
-  },
-  {
-    "text": "상담 예약 취소 완료됐어?",
-    "expectedIntent": "CancelConsultation"
-  },
-  {
-    "text": "압구정PB센터 해외주식 상담 예약하고 싶습니다",
-    "expectedIntent": "BookConsultation"
-  },
-  {
-    "text": "연금저축 중도해지 하면 어떻게 돼?",
-    "expectedIntent": "ProductInfo"
-  },
-  {
-    "text": "할 수 있는 거 알려줘",
-    "expectedIntent": "Help"
-  }
-]
+{
+  "domain": "finance-investment-consultation",
+  "localeId": "ko_KR",
+  "description": "금융투자 상담 챗봇용 테스트 시나리오. 단발 의도 분류와 멀티턴 슬롯 수집/예약 조회/취소 흐름을 함께 검증합니다.",
+  "singleTurnCases": [
+    {
+      "id": "help-001",
+      "text": "무슨 기능이 있어?",
+      "expectedIntent": "Help",
+      "expectedState": "Fulfilled"
+    },
+    {
+      "id": "help-002",
+      "text": "상담 예약은 어떻게 해?",
+      "expectedIntent": "Help",
+      "expectedState": "Fulfilled"
+    },
+    {
+      "id": "book-001",
+      "text": "여의도지점 ETF 상담 예약하고 싶어요",
+      "expectedIntent": "BookConsultation"
+    },
+    {
+      "id": "book-002",
+      "text": "강남WM센터 국내주식 상담 예약, 이름 김도영",
+      "expectedIntent": "BookConsultation"
+    },
+    {
+      "id": "book-003",
+      "text": "판교지점 연금저축 7월 13일 10시 예약해줘",
+      "expectedIntent": "BookConsultation"
+    },
+    {
+      "id": "check-001",
+      "text": "상담 예약 조회해줘",
+      "expectedIntent": "CheckConsultation",
+      "expectedState": "Fulfilled"
+    },
+    {
+      "id": "check-002",
+      "text": "예약번호 C-TEST01 확인",
+      "expectedIntent": "CheckConsultation",
+      "expectedState": "Fulfilled"
+    },
+    {
+      "id": "cancel-001",
+      "text": "상담 예약 취소하고 싶어요",
+      "expectedIntent": "CancelConsultation",
+      "expectedState": "Fulfilled"
+    },
+    {
+      "id": "cancel-002",
+      "text": "예약번호 C-HELLO1 취소 요청",
+      "expectedIntent": "CancelConsultation",
+      "expectedState": "Fulfilled"
+    },
+    {
+      "id": "product-001",
+      "text": "ISA 계좌 혜택이 뭐야",
+      "expectedIntent": "ProductInfo",
+      "expectedState": "Fulfilled"
+    },
+    {
+      "id": "product-002",
+      "text": "해외주식 수수료 얼마야",
+      "expectedIntent": "ProductInfo",
+      "expectedState": "Fulfilled"
+    },
+    {
+      "id": "product-003",
+      "text": "ELS 위험도 어때?",
+      "expectedIntent": "ProductInfo",
+      "expectedState": "Fulfilled"
+    }
+  ],
+  "multiTurnScenarios": [
+    {
+      "id": "scenario-book-full",
+      "name": "투자상담 예약 슬롯 수집 완료",
+      "turns": [
+        {
+          "text": "투자상담 예약하고 싶어요",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "여의도지점",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "ETF",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "2026-07-15",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "14:00",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "김도영",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "010-1234-5678",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "Fulfilled"
+        }
+      ]
+    },
+    {
+      "id": "scenario-book-then-check",
+      "name": "예약 후 마지막 상담 조회",
+      "turns": [
+        {
+          "text": "투자상담 예약하고 싶어요",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "강남WM센터",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "국내주식",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "2026-08-01",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "16:00",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "홍길동",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "010-1111-2222",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "Fulfilled"
+        },
+        {
+          "text": "방금 예약한 거 확인해줘",
+          "expectedIntent": "CheckConsultation",
+          "expectedState": "Fulfilled"
+        }
+      ]
+    },
+    {
+      "id": "scenario-book-then-cancel",
+      "name": "예약 후 마지막 상담 취소",
+      "turns": [
+        {
+          "text": "투자상담 예약하고 싶어요",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "압구정PB센터",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "ELS",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "2026-08-08",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "11:00",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "이서준",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "InProgress"
+        },
+        {
+          "text": "010-9999-0000",
+          "expectedIntent": "BookConsultation",
+          "expectedState": "Fulfilled"
+        },
+        {
+          "text": "마지막 상담 예약 취소해줘",
+          "expectedIntent": "CancelConsultation",
+          "expectedState": "Fulfilled"
+        }
+      ]
+    },
+    {
+      "id": "scenario-product-help",
+      "name": "상품 안내 후 도움말",
+      "turns": [
+        {
+          "text": "ETF가 뭐야",
+          "expectedIntent": "ProductInfo",
+          "expectedState": "Fulfilled"
+        },
+        {
+          "text": "그 다음엔 뭘 할 수 있어?",
+          "expectedIntent": "Help",
+          "expectedState": "Fulfilled"
+        }
+      ]
+    }
+  ]
+}

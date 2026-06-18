@@ -3,26 +3,26 @@
  */
 
 const SLOT_PLACEHOLDERS = {
-  Branch: "지점을 입력하세요 (예: 강남점)",
-  CourseName: "과정을 입력하세요 (예: 토익)",
-  Date: "날짜를 입력하세요 (예: 2월 10일)",
+  Branch: "지점을 입력하세요 (예: 여의도지점)",
+  ProductType: "상품을 입력하세요 (예: ETF)",
+  Date: "날짜를 입력하세요 (예: 2026-07-15)",
   Time: "시간을 입력하세요 (예: 19:30)",
-  StudentName: "이름을 입력하세요 (예: 김도영)",
+  CustomerName: "이름을 입력하세요 (예: 김도영)",
   PhoneNumber: "연락처를 입력하세요 (예: 010-1234-5678)",
-  ReservationId: "예약번호를 입력하세요"
+  ConsultationId: "예약번호를 입력하세요 (예: C-ABCD12)"
 };
 
 const SLOT_LABELS = {
   Branch: "지점",
-  CourseName: "과정",
+  ProductType: "상품",
   Date: "날짜",
   Time: "시간",
-  StudentName: "이름",
+  CustomerName: "고객명",
   PhoneNumber: "연락처",
-  ReservationId: "예약번호"
+  ConsultationId: "예약번호"
 };
 
-const SUMMARY_ORDER = ["Branch","CourseName","Date","Time","StudentName","PhoneNumber","ReservationId"];
+const SUMMARY_ORDER = ["Branch","ProductType","Date","Time","CustomerName","PhoneNumber","ConsultationId"];
 
 function safeTextMessages(raw) {
   const msgs = raw?.messages || [];

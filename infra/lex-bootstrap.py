@@ -329,7 +329,7 @@ def main() -> int:
     print("[4/9] SlotType 생성/갱신")
     slot_types = run_aws(cfg, "lexv2-models", "list-slot-types", "--bot-id", bot_id, "--bot-version", "DRAFT", "--locale-id", cfg["LOCALE_ID"], "--max-results", "100")
     branch_values = make_slot_type_values(split_csv(cfg["BRANCH_VALUES"]))
-    course_values = make_slot_type_values(split_csv(cfg["COURSE_VALUES"]))
+    product_values = make_slot_type_values(split_csv(cfg["PRODUCT_VALUES"]))
 
     def upsert_slot_type(name: str, desc: str, values: list[dict[str, Any]]) -> str:
         found_id = find_summary_id(slot_types.get("slotTypeSummaries", []), "slotTypeName", "slotTypeId", name)
@@ -361,35 +361,69 @@ def main() -> int:
         print(f" - {name} 생성: {created_id}")
         return created_id
 
-    branch_type_id = upsert_slot_type("BranchType", "학원 지점", branch_values)
-    course_type_id = upsert_slot_type("CourseType", "수강 과정", course_values)
+    branch_type_id = upsert_slot_type("BranchType", "증권사 지점/WM센터", branch_values)
+    product_type_id = upsert_slot_type("ProductType", "금융투자 상품 유형", product_values)
 
     # [5/9] Intent/slots
     print("[5/9] Intent 생성/갱신 + Slots 구성")
     intents = run_aws(cfg, "lexv2-models", "list-intents", "--bot-id", bot_id, "--bot-version", "DRAFT", "--locale-id", cfg["LOCALE_ID"], "--max-results", "100")
-    make_intent_id = find_summary_id(intents.get("intentSummaries", []), "intentName", "intentId", "MakeReservation")
-
-    base_utt = [{"utterance": "상담 예약할래요"}, {"utterance": "예약하고 싶어요"}, {"utterance": "수강 상담 예약"}]
-    if make_intent_id:
-        run_aws(cfg, "lexv2-models", "update-intent", "--bot-id", bot_id, "--bot-version", "DRAFT", "--locale-id", cfg["LOCALE_ID"], "--intent-id", make_intent_id, "--intent-name", "MakeReservation", "--description", "상담/수강 예약 생성", "--sample-utterances", json.dumps(base_utt, ensure_ascii=False), output_json=False)
-    else:
-        make_intent_id = run_aws(cfg, "lexv2-models", "create-intent", "--bot-id", bot_id, "--bot-version", "DRAFT", "--locale-id", cfg["LOCALE_ID"], "--intent-name", "MakeReservation", "--description", "상담/수강 예약 생성", "--sample-utterances", json.dumps(base_utt, ensure_ascii=False))["intentId"]
-    assert_id("MAKE_INTENT_ID", make_intent_id)
 
     builtins = list_builtins(cfg, cache_file)
     name_type = pick_builtin(builtins, "AMAZON.Person", "AMAZON.FirstName", "AMAZON.LastName")
     date_type = pick_builtin(builtins, "AMAZON.Date", "AMAZON.DateTime")
     time_type = pick_builtin(builtins, "AMAZON.Time", "AMAZON.DateTime")
     phone_type = pick_builtin(builtins, "AMAZON.PhoneNumber")
-    if not all([name_type, date_type, time_type, phone_type]):
+    alpha_num_type = pick_builtin(builtins, "AMAZON.AlphaNumeric", "AMAZON.Number", "AMAZON.Text")
+    if not all([name_type, date_type, time_type, phone_type, alpha_num_type]):
         raise ScriptError("ko_KR에서 사용할 수 있는 built-in slot type을 찾지 못했습니다.")
 
-    slots = run_aws(cfg, "lexv2-models", "list-slots", "--bot-id", bot_id, "--bot-version", "DRAFT", "--locale-id", cfg["LOCALE_ID"], "--intent-id", make_intent_id, "--max-results", "100")
+    def upsert_intent(name: str, desc: str, utterances: list[str]) -> str:
+        intent_id = find_summary_id(intents.get("intentSummaries", []), "intentName", "intentId", name)
+        args = [
+            "lexv2-models",
+            "update-intent" if intent_id else "create-intent",
+            "--bot-id",
+            bot_id,
+            "--bot-version",
+            "DRAFT",
+            "--locale-id",
+            cfg["LOCALE_ID"],
+            "--intent-name",
+            name,
+            "--description",
+            desc,
+            "--sample-utterances",
+            json.dumps([{"utterance": utterance} for utterance in utterances], ensure_ascii=False),
+        ]
+        if intent_id:
+            args.extend(["--intent-id", intent_id])
+            run_aws(cfg, *args, output_json=False)
+            print(f" - Intent 갱신(BASE): {name} ({intent_id})")
+            return intent_id
+        created = run_aws(cfg, *args)
+        created_id = created["intentId"]
+        print(f" - Intent 생성(BASE): {name} ({created_id})")
+        return created_id
 
-    def upsert_slot(name: str, slot_type: str, prompt: str, priority: int) -> tuple[str, dict[str, Any]]:
+    def upsert_slot(intent_id: str, name: str, slot_type: str, required: bool, prompt: str) -> str:
+        slots = run_aws(
+            cfg,
+            "lexv2-models",
+            "list-slots",
+            "--bot-id",
+            bot_id,
+            "--bot-version",
+            "DRAFT",
+            "--locale-id",
+            cfg["LOCALE_ID"],
+            "--intent-id",
+            intent_id,
+            "--max-results",
+            "100",
+        )
         slot_id = find_summary_id(slots.get("slotSummaries", []), "slotName", "slotId", name)
         elicitation = {
-            "slotConstraint": "Required",
+            "slotConstraint": "Required" if required else "Optional",
             "promptSpecification": {
                 "maxRetries": 2,
                 "messageGroups": [{"message": {"plainTextMessage": {"value": prompt}}}],
@@ -405,7 +439,7 @@ def main() -> int:
             "--locale-id",
             cfg["LOCALE_ID"],
             "--intent-id",
-            make_intent_id,
+            intent_id,
             "--slot-name",
             name,
             "--slot-type-id",
@@ -416,34 +450,258 @@ def main() -> int:
         if slot_id:
             common.extend(["--slot-id", slot_id])
             run_aws(cfg, *common, output_json=False)
+            print(f"   • Slot 갱신: {name} ({slot_id})")
             sid = slot_id
         else:
             sid = run_aws(cfg, *common)["slotId"]
+            print(f"   • Slot 생성: {name} ({sid})")
         assert_id("slotId", sid)
-        return sid, {"priority": priority, "slotId": sid}
+        return sid
 
-    priority_entries = []
-    for idx, spec in enumerate(
-        [
-            ("Branch", branch_type_id, "어느 지점으로 예약할까요? (예: 강남점)"),
-            ("CourseName", course_type_id, "어떤 과정을 원하세요? (예: 토익)"),
-            ("Date", date_type, "희망 날짜를 알려주세요. (예: 2026-02-10 또는 2월 10일)"),
-            ("Time", time_type, "희망 시간을 알려주세요. (예: 19:30)"),
-            ("StudentName", name_type, "예약자 이름을 알려주세요."),
-            ("PhoneNumber", phone_type, "연락처를 알려주세요. (예: 010-1234-5678)"),
-        ],
-        1,
-    ):
-        _, entry = upsert_slot(spec[0], spec[1], spec[2], idx)
-        priority_entries.append(entry)
-
-    full_utt = [
-        {"utterance": "강남점 토익 예약하고 싶어요"},
-        {"utterance": "{Branch} {CourseName} 상담 예약할래요"},
-        {"utterance": "{Date} {Time}에 {Branch} {CourseName} 예약"},
+    book_intent_id = upsert_intent(
+        "BookConsultation",
+        "투자상담 예약 생성",
+        ["투자상담 예약하고 싶어요", "상담 예약할게요", "투자 상담 받고 싶어요", "PB 상담 신청할게요"],
+    )
+    assert_id("BOOK_INTENT_ID", book_intent_id)
+    book_slot_specs = [
+        ("Branch", branch_type_id, True, "어느 지점/WM센터로 예약할까요? (예: 여의도지점, 강남WM센터)"),
+        ("ProductType", product_type_id, True, "어떤 상품의 상담을 원하세요? (예: 국내주식, ETF, 펀드, ISA)"),
+        ("Date", date_type, True, "희망 상담 날짜를 알려주세요. (예: 2026-07-15 또는 7월 15일)"),
+        ("Time", time_type, True, "희망 상담 시간을 알려주세요. (예: 14:00)"),
+        ("CustomerName", name_type, True, "예약자 성함을 알려주세요."),
+        ("PhoneNumber", phone_type, True, "연락처를 알려주세요. (예: 010-1234-5678)"),
     ]
-    run_aws(cfg, "lexv2-models", "update-intent", "--bot-id", bot_id, "--bot-version", "DRAFT", "--locale-id", cfg["LOCALE_ID"], "--intent-id", make_intent_id, "--intent-name", "MakeReservation", "--description", "상담/수강 예약 생성", "--sample-utterances", json.dumps(full_utt, ensure_ascii=False), "--slot-priorities", json.dumps(priority_entries), "--fulfillment-code-hook", "enabled=true", output_json=False)
-    print("✅ [5/9] MakeReservation intent/slots OK")
+    book_priorities = []
+    for idx, spec in enumerate(book_slot_specs, 1):
+        slot_id = upsert_slot(book_intent_id, spec[0], spec[1], spec[2], spec[3])
+        book_priorities.append({"priority": idx, "slotId": slot_id})
+    run_aws(
+        cfg,
+        "lexv2-models",
+        "update-intent",
+        "--bot-id",
+        bot_id,
+        "--bot-version",
+        "DRAFT",
+        "--locale-id",
+        cfg["LOCALE_ID"],
+        "--intent-id",
+        book_intent_id,
+        "--intent-name",
+        "BookConsultation",
+        "--description",
+        "투자상담 예약 생성",
+        "--sample-utterances",
+        json.dumps(
+            [
+                {"utterance": "여의도지점 ETF 상담 예약하고 싶어요"},
+                {"utterance": "{Branch} {ProductType} 투자상담 예약할래요"},
+                {"utterance": "{Date} {Time}에 {Branch} {ProductType} 상담 예약해줘"},
+                {"utterance": "강남WM센터 국내주식 상담 예약"},
+            ],
+            ensure_ascii=False,
+        ),
+        "--slot-priorities",
+        json.dumps(book_priorities),
+        "--fulfillment-code-hook",
+        "enabled=true",
+        output_json=False,
+    )
+    print(" - BookConsultation intent/slots OK")
+
+    check_intent_id = upsert_intent(
+        "CheckConsultation",
+        "투자상담 예약 조회",
+        ["상담 예약 조회해줘", "예약 확인하고 싶어요", "내 상담 예약 있어?", "예약번호로 조회할게"],
+    )
+    assert_id("CHECK_INTENT_ID", check_intent_id)
+    check_slot_id = upsert_slot(check_intent_id, "ConsultationId", alpha_num_type, False, "예약번호를 알려주세요. (예: C-ABCD12)")
+    run_aws(
+        cfg,
+        "lexv2-models",
+        "update-intent",
+        "--bot-id",
+        bot_id,
+        "--bot-version",
+        "DRAFT",
+        "--locale-id",
+        cfg["LOCALE_ID"],
+        "--intent-id",
+        check_intent_id,
+        "--intent-name",
+        "CheckConsultation",
+        "--description",
+        "투자상담 예약 조회",
+        "--sample-utterances",
+        json.dumps(
+            [
+                {"utterance": "상담 예약 조회해줘"},
+                {"utterance": "예약 확인하고 싶어요"},
+                {"utterance": "내 상담 예약 있어?"},
+                {"utterance": "예약번호로 조회할게"},
+                {"utterance": "C-ABCD12 예약 조회"},
+                {"utterance": "예약번호 C-TEST01 확인"},
+                {"utterance": "방금 예약한 거 확인해줘"},
+                {"utterance": "내 마지막 상담 예약 내용 뭐야?"},
+                {"utterance": "상담 예약 내역 확인"},
+                {"utterance": "예약 상태 알려줘"},
+            ],
+            ensure_ascii=False,
+        ),
+        "--slot-priorities",
+        json.dumps([{"priority": 1, "slotId": check_slot_id}]),
+        "--fulfillment-code-hook",
+        "enabled=true",
+        output_json=False,
+    )
+    print(" - CheckConsultation intent OK")
+
+    cancel_intent_id = upsert_intent(
+        "CancelConsultation",
+        "투자상담 예약 취소",
+        ["상담 예약 취소하고 싶어요", "예약 취소해줘", "상담 취소할래요"],
+    )
+    assert_id("CANCEL_INTENT_ID", cancel_intent_id)
+    cancel_slot_id = upsert_slot(cancel_intent_id, "ConsultationId", alpha_num_type, False, "취소할 예약번호를 알려주세요. (예: C-ABCD12)")
+    run_aws(
+        cfg,
+        "lexv2-models",
+        "update-intent",
+        "--bot-id",
+        bot_id,
+        "--bot-version",
+        "DRAFT",
+        "--locale-id",
+        cfg["LOCALE_ID"],
+        "--intent-id",
+        cancel_intent_id,
+        "--intent-name",
+        "CancelConsultation",
+        "--description",
+        "투자상담 예약 취소",
+        "--sample-utterances",
+        json.dumps(
+            [
+                {"utterance": "상담 예약 취소하고 싶어요"},
+                {"utterance": "예약 취소해줘"},
+                {"utterance": "상담 취소할래요"},
+                {"utterance": "C-ABCD12 취소해줘"},
+                {"utterance": "예약번호 C-TEST01 취소"},
+                {"utterance": "마지막 예약 취소해줘"},
+                {"utterance": "방금 잡은 상담 취소할게"},
+                {"utterance": "여의도지점 상담 예약 취소"},
+                {"utterance": "상담 예약 삭제해줘"},
+            ],
+            ensure_ascii=False,
+        ),
+        "--slot-priorities",
+        json.dumps([{"priority": 1, "slotId": cancel_slot_id}]),
+        "--fulfillment-code-hook",
+        "enabled=true",
+        output_json=False,
+    )
+    print(" - CancelConsultation intent OK")
+
+    product_info_intent_id = upsert_intent(
+        "ProductInfo",
+        "금융투자 상품 안내",
+        ["금융상품 안내해줘", "투자 상품 정보 알려줘", "ETF가 뭐야", "펀드 투자 어떻게 해"],
+    )
+    assert_id("PRODUCT_INFO_INTENT_ID", product_info_intent_id)
+    product_slot_id = upsert_slot(product_info_intent_id, "ProductType", product_type_id, False, "어떤 상품이 궁금하세요? (예: ETF, 국내주식, 펀드, ELS, ISA)")
+    run_aws(
+        cfg,
+        "lexv2-models",
+        "update-intent",
+        "--bot-id",
+        bot_id,
+        "--bot-version",
+        "DRAFT",
+        "--locale-id",
+        cfg["LOCALE_ID"],
+        "--intent-id",
+        product_info_intent_id,
+        "--intent-name",
+        "ProductInfo",
+        "--description",
+        "금융투자 상품 안내",
+        "--sample-utterances",
+        json.dumps(
+            [
+                {"utterance": "금융상품 안내해줘"},
+                {"utterance": "투자 상품 정보 알려줘"},
+                {"utterance": "ETF가 뭐야"},
+                {"utterance": "펀드 투자 어떻게 해"},
+                {"utterance": "국내주식 투자 방법 알려줘"},
+                {"utterance": "해외주식 수수료 얼마야"},
+                {"utterance": "ELS 위험도 어때?"},
+                {"utterance": "채권 투자 안내해줘"},
+                {"utterance": "ISA 계좌 혜택이 뭐야"},
+                {"utterance": "연금저축 상품 설명해줘"},
+                {"utterance": "ETF 종류가 어떻게 돼?"},
+                {"utterance": "펀드 수익률 어떻게 봐?"},
+                {"utterance": "해외주식 환율 위험 있나요"},
+            ],
+            ensure_ascii=False,
+        ),
+        "--slot-priorities",
+        json.dumps([{"priority": 1, "slotId": product_slot_id}]),
+        "--fulfillment-code-hook",
+        "enabled=true",
+        output_json=False,
+    )
+    print(" - ProductInfo intent OK")
+
+    help_intent_id = upsert_intent(
+        "Help",
+        "기능 안내/도움말",
+        ["할 수 있는 거 알려줘", "도움말", "무슨 기능이 있어?", "상담 예약은 어떻게 해?", "메뉴 알려줘"],
+    )
+    assert_id("HELP_INTENT_ID", help_intent_id)
+    run_aws(
+        cfg,
+        "lexv2-models",
+        "update-intent",
+        "--bot-id",
+        bot_id,
+        "--bot-version",
+        "DRAFT",
+        "--locale-id",
+        cfg["LOCALE_ID"],
+        "--intent-id",
+        help_intent_id,
+        "--intent-name",
+        "Help",
+        "--description",
+        "기능 안내/도움말",
+        "--sample-utterances",
+        json.dumps(
+            [
+                {"utterance": "할 수 있는 거 알려줘"},
+                {"utterance": "도움말"},
+                {"utterance": "무슨 기능이 있어?"},
+                {"utterance": "상담 예약은 어떻게 해?"},
+                {"utterance": "메뉴 알려줘"},
+                {"utterance": "사용 방법"},
+                {"utterance": "뭐라고 말하면 돼?"},
+                {"utterance": "예시 문장 알려줘"},
+                {"utterance": "사용법 설명해줘"},
+                {"utterance": "가능한 요청 목록"},
+                {"utterance": "기능 설명"},
+                {"utterance": "어떤 질문 할 수 있어?"},
+                {"utterance": "상담 예약 도와줘"},
+                {"utterance": "예약 확인 도와줘"},
+                {"utterance": "취소 도와줘"},
+                {"utterance": "투자 상품 안내 받을 수 있어?"},
+            ],
+            ensure_ascii=False,
+        ),
+        "--fulfillment-code-hook",
+        "enabled=true",
+        output_json=False,
+    )
+    print("✅ [5/9] 금융투자 상담 인텐트 구성 OK")
 
     # [6/9] Build
     print("[6/9] Locale Build 시작")
@@ -451,7 +709,7 @@ def main() -> int:
     wait_until(
         f"Build 완료: {cfg['LOCALE_ID']}",
         lambda: get_text(cfg, "lexv2-models", "describe-bot-locale", "--bot-id", bot_id, "--bot-version", "DRAFT", "--locale-id", cfg["LOCALE_ID"], "--query", "botLocaleStatus"),
-        {"Built"},
+        {"Built", "ReadyExpressTesting"},
         {"Failed"},
         900,
         10,

@@ -52,8 +52,8 @@ async function getSuggestions({ slot, env, region }) {
     const fromEnv = parseCsv(env.BRANCH_VALUES);
     if (fromEnv.length) return fromEnv;
   }
-  if (slot === "CourseName") {
-    const fromEnv = parseCsv(env.COURSE_VALUES);
+  if (slot === "ProductType") {
+    const fromEnv = parseCsv(env.PRODUCT_VALUES);
     if (fromEnv.length) return fromEnv;
   }
 
@@ -64,7 +64,7 @@ async function getSuggestions({ slot, env, region }) {
   if (!botId) return [];
 
   const slotTypeName = slot === "Branch" ? "BranchType"
-                    : slot === "CourseName" ? "CourseType"
+                    : slot === "ProductType" ? "ProductType"
                     : null;
   if (!slotTypeName) return [];
 

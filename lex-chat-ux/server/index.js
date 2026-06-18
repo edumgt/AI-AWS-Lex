@@ -3,6 +3,9 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const { nanoid } = require("nanoid");
 require("dotenv").config();
+const { loadRuntimeEnv } = require("../../shared/runtimeEnv");
+
+loadRuntimeEnv();
 
 const { recognizeText } = require("./lexClient");
 
@@ -64,16 +67,19 @@ app.post("/api/chat", async (req, res) => {
       return res.json(out);
     }
 
-    const reservationOut = await runReservationFlow({
-      text,
-      sessionId,
-      getSuggestions: async (slot) =>
-        getSuggestions({ slot, env: process.env, region: process.env.AWS_REGION })
-    });
+    const localReservationFlowEnabled = (process.env.ENABLE_LOCAL_RESERVATION_FLOW || "").toLowerCase() === "true";
+    if (localReservationFlowEnabled) {
+      const reservationOut = await runReservationFlow({
+        text,
+        sessionId,
+        getSuggestions: async (slot) =>
+          getSuggestions({ slot, env: process.env, region: process.env.AWS_REGION })
+      });
 
-    if (reservationOut) {
-      res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
-      return res.json({ ...reservationOut, engine });
+      if (reservationOut) {
+        res.cookie("lex_session_id", sessionId, { httpOnly: false, sameSite: "lax" });
+        return res.json({ ...reservationOut, engine });
+      }
     }
 
     const raw = await recognizeText({ text, sessionId });

@@ -27,15 +27,15 @@ function getTodayKey() {
       sessionId: 'reminder-demo-session',
       summaryItems: [],
       selectedEngine: 'aws-lex',
-      lastReservation: {
+      lastConsultation: {
         createdAt: `${todayKey}T09:00:00.000Z`,
-        message: '예약이 완료됐어요. 예약번호는 R-DEMO20260403 입니다.',
+        message: '투자상담 예약이 완료되었습니다. 예약번호: C-DEMO20260403',
         fields: {
-          Branch: '동대구역',
-          CourseName: '토익',
+          Branch: '여의도지점',
+          ProductType: 'ETF',
           Date: todayKey,
-          Time: '19:30',
-          StudentName: '홍길동',
+          Time: '14:00',
+          CustomerName: '홍길동',
           PhoneNumber: '010-1234-5678'
         }
       },
