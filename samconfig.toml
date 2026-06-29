@@ -25,7 +25,9 @@ parameter_overrides = [
   "DefaultAiEngine=aws-lex",
   "EnabledAiEngines=aws-lex",
   "EnableLocalReservationFlow=false",
-  "CorsOrigin=*"
+  "AllowedOrigins=http://localhost:9000,https://www.edumgt.co.kr",
+  "CognitoCallbackUrls=http://localhost:9000/,https://www.edumgt.co.kr/lex/",
+  "CognitoLogoutUrls=http://localhost:9000/,https://www.edumgt.co.kr/lex/"
 ]
 
 [default.sync.parameters]

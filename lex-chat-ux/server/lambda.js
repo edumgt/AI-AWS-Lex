@@ -54,15 +54,21 @@ function makeSetCookie(name, value, { httpOnly = false, sameSite = "Lax" } = {})
   return h;
 }
 
-const CORS = {
-  "Access-Control-Allow-Origin":  process.env.CORS_ORIGIN || "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type,Cookie",
-  "Access-Control-Allow-Credentials": "true",
-};
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || "https://www.edumgt.co.kr").split(",").map(s => s.trim());
 
-function respond(statusCode, body, setCookies = []) {
-  const headers = { "Content-Type": "application/json", ...CORS };
+function makeCORSHeaders(event) {
+  const reqOrigin = (event?.headers?.origin || event?.headers?.Origin || "").trim();
+  const origin = ALLOWED_ORIGINS.includes(reqOrigin) ? reqOrigin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin":      origin,
+    "Access-Control-Allow-Methods":     "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers":     "Content-Type,Cookie,Authorization,x-chatbot-client-key",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+function respond(statusCode, body, setCookies = [], event = null) {
+  const headers = { "Content-Type": "application/json", ...makeCORSHeaders(event) };
   const response = {
     statusCode,
     headers,
@@ -73,43 +79,49 @@ function respond(statusCode, body, setCookies = []) {
   return response;
 }
 
-function ok(body, setCookies = [])    { return respond(200, body, setCookies); }
-function badReq(body)                  { return respond(400, body); }
-function serverErr(body)               { return respond(500, body); }
-function notFound()                    { return respond(404, { error: "Not Found" }); }
+function ok(body, setCookies = [], event = null)  { return respond(200, body, setCookies, event); }
+function badReq(body, event = null)               { return respond(400, body, [], event); }
+function serverErr(body, event = null)            { return respond(500, body, [], event); }
+function notFound(event = null)                   { return respond(404, { error: "Not Found" }, [], event); }
 
 // ── 라우트 핸들러 ─────────────────────────────────────────────────────────────
 
-async function handleHealth() {
-  return ok({ ok: true });
+async function handleClientAuth(event) {
+  const token     = crypto.randomBytes(24).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+  return ok({ clientToken: token, expiresAt }, [], event);
 }
 
-async function handleEngines() {
+async function handleHealth(event) {
+  return ok({ ok: true }, [], event);
+}
+
+async function handleEngines(event) {
   const engines = getEnabledEngines();
   const defaultEngine = (process.env.DEFAULT_AI_ENGINE || "aws-lex").trim();
   const enabledIds = new Set(engines.map((e) => e.key));
   return ok({
     defaultEngine: enabledIds.has(defaultEngine) ? defaultEngine : "aws-lex",
     engines,
-  });
+  }, [], event);
 }
 
-async function handleSuggestions(qs) {
+async function handleSuggestions(qs, event) {
   const slot   = (qs?.slot || "").toString();
   const region = process.env.AWS_REGION;
-  if (!region) return badReq({ error: "AWS_REGION is required" });
+  if (!region) return badReq({ error: "AWS_REGION is required" }, event);
 
   try {
     const suggestions = await getSuggestions({ slot, env: process.env, region });
-    return ok({ slot, suggestions });
+    return ok({ slot, suggestions }, [], event);
   } catch (err) {
-    return serverErr({ error: err?.message || String(err) });
+    return serverErr({ error: err?.message || String(err) }, event);
   }
 }
 
-async function handleChat(body, cookies) {
+async function handleChat(body, cookies, event) {
   const text = (body?.text || "").toString().trim();
-  if (!text) return badReq({ error: "text is required" });
+  if (!text) return badReq({ error: "text is required" }, event);
 
   const requestedEngine = (body?.engine || process.env.DEFAULT_AI_ENGINE || "aws-lex").toString().trim();
   const enabledEngines  = getEnabledEngines();
@@ -126,7 +138,7 @@ async function handleChat(body, cookies) {
     // 온프렘 엔진 (rasa / azure-clu / ollama / openai-compatible)
     if (engine !== "aws-lex") {
       const out = await chatWithOnPremEngine({ text, sessionId, engine });
-      return ok(out, [sessionCookie]);
+      return ok(out, [sessionCookie], event);
     }
 
     // 로컬 예약 플로우 (ENABLE_LOCAL_RESERVATION_FLOW=true 시)
@@ -138,7 +150,7 @@ async function handleChat(body, cookies) {
         getSuggestions: (slot) =>
           getSuggestions({ slot, env: process.env, region: process.env.AWS_REGION }),
       });
-      if (reservationOut) return ok({ ...reservationOut, engine }, [sessionCookie]);
+      if (reservationOut) return ok({ ...reservationOut, engine }, [sessionCookie], event);
     }
 
     // AWS Lex V2
@@ -155,12 +167,12 @@ async function handleChat(body, cookies) {
       if (suggestions.length) out.ui.quickReplies = suggestions.slice(0, 8);
     }
 
-    return ok({ ...out, engine }, [sessionCookie]);
+    return ok({ ...out, engine }, [sessionCookie], event);
   } catch (err) {
     return serverErr({
       error: err?.message || String(err),
       hint:  "AWS_REGION / LEX_BOT_ID / LEX_BOT_ALIAS_ID / LEX_LOCALE_ID 환경변수와 AWS 자격증명 설정을 확인하세요.",
-    });
+    }, event);
   }
 }
 
@@ -182,7 +194,7 @@ exports.handler = async (event) => {
 
   // CORS preflight
   if (method === "OPTIONS") {
-    return { statusCode: 204, headers: CORS, body: "" };
+    return { statusCode: 204, headers: makeCORSHeaders(event), body: "" };
   }
 
   const cookies = parseCookies(event);
@@ -197,10 +209,11 @@ exports.handler = async (event) => {
     }
   }
 
-  if (method === "GET"  && path === "/api/health")      return handleHealth();
-  if (method === "GET"  && path === "/api/engines")      return handleEngines();
-  if (method === "GET"  && path === "/api/suggestions")  return handleSuggestions(qs);
-  if (method === "POST" && path === "/api/chat")         return handleChat(body, cookies);
+  if (method === "GET"  && path === "/api/client-auth")  return handleClientAuth(event);
+  if (method === "GET"  && path === "/api/health")       return handleHealth(event);
+  if (method === "GET"  && path === "/api/engines")      return handleEngines(event);
+  if (method === "GET"  && path === "/api/suggestions")  return handleSuggestions(qs, event);
+  if (method === "POST" && path === "/api/chat")         return handleChat(body, cookies, event);
 
-  return notFound();
+  return notFound(event);
 };

@@ -5,8 +5,8 @@ version: "3.9"
 #
 # 서비스:
 #   1. ollama-adapter : Node.js REST 어댑터 (:3200) → Windows Ollama (host:11434)
-#   2. webapp         : Quasar 프론트엔드 (:9000)
-#                       /api/* → API Gateway → chatbot-api Lambda → Lex V2
+#   2. webapp         : Quasar 프론트엔드 (:9000) + Express API (:3000)
+#                       /api/* → local Express 인증계층 → 통합 핸들러 → Lex/Rasa/Ollama
 #
 # 시작:
 #   docker compose up --build
@@ -38,8 +38,8 @@ services:
     command: sh -c "npm install && node index.js"
 
   # -----------------------------------------------------------
-  # 2. 웹앱 (Quasar 프론트엔드 :9000)
-  #    /api/* → API Gateway → chatbot-api Lambda
+  # 2. 웹앱 (Quasar 프론트엔드 :9000 + Express API :3000)
+  #    /api/* → 로컬 Express 인증계층 → 통합 엔진 핸들러
   # -----------------------------------------------------------
   webapp:
     build:
@@ -47,8 +47,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "9000:9000"    # Quasar dev server (브라우저 접속)
+      - "3000:3000"    # Express API server
+    volumes:
+      - /root/.aws:/root/.aws:ro
+    env_file:
+      - .env
     environment:
-      - API_GATEWAY_URL=https://4f4hd52bf0.execute-api.ap-northeast-2.amazonaws.com
+      - PORT=3000
     restart: unless-stopped
     networks:
       - chatbot-net

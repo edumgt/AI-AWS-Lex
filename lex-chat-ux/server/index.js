@@ -19,44 +19,75 @@ const { loadRuntimeEnv } = require("./runtimeEnv");
 
 loadRuntimeEnv();
 
-const { invokeChatApi, FUNCTION_NAME } = require("./lambdaClient");
+const { issueFrontendToken, requireFrontendAuth } = require("./frontendAuth");
+const { handler: localApiHandler } = require("./lambda");
 
 const app = express();
 app.use(express.json({ limit: "256kb" }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-async function proxyToLambda(req, res) {
+async function proxyToApiHandler(req, res) {
   try {
-    const { statusCode, body, cookies } = await invokeChatApi({
-      method:  req.method,
-      path:    req.path,
-      query:   req.query  || {},
-      body:    ["POST", "PUT", "PATCH"].includes(req.method) ? req.body : null,
-      cookies: req.cookies || {},
-    });
+    const lambdaStyleEvent = {
+      requestContext: {
+        http: {
+          method: req.method,
+          path: req.path
+        }
+      },
+      path: req.path,
+      queryStringParameters: req.query || {},
+      headers: {
+        cookie: req.headers.cookie || "",
+        origin: req.headers.origin || "",
+        referer: req.headers.referer || "",
+        "user-agent": req.headers["user-agent"] || ""
+      },
+      cookies: Object.entries(req.cookies || {}).map(([key, value]) => `${key}=${value}`),
+      body: ["POST", "PUT", "PATCH"].includes(req.method) ? JSON.stringify(req.body || {}) : null
+    };
 
-    if (Array.isArray(cookies)) {
-      cookies.forEach((c) => res.setHeader("Set-Cookie", c));
+    const response = await localApiHandler(lambdaStyleEvent);
+    const statusCode = Number(response?.statusCode || 200);
+    const body = typeof response?.body === "string"
+      ? JSON.parse(response.body || "{}")
+      : (response?.body || {});
+    const cookies = Array.isArray(response?.cookies) ? response.cookies : [];
+
+    if (cookies.length) {
+      res.append("Set-Cookie", cookies);
     }
+
+    if (response?.headers) {
+      for (const [key, value] of Object.entries(response.headers)) {
+        if (String(key).toLowerCase() === "content-type") continue;
+        res.setHeader(key, value);
+      }
+    }
+
     res.status(statusCode).json(body);
   } catch (err) {
-    console.error("[proxy] Lambda 호출 실패:", err.message);
+    console.error("[proxy] API handler 호출 실패:", err.message);
     res.status(502).json({
       error: err.message || String(err),
-      hint:  `Lambda 함수(${FUNCTION_NAME}) 호출에 실패했습니다. AWS 자격증명 및 CHAT_API_FUNCTION_NAME 확인`,
+      hint: "로컬 API 핸들러 실행에 실패했습니다. 엔진 설정과 AWS 자격증명을 확인하세요."
     });
   }
 }
 
-app.get( "/api/health",      proxyToLambda);
-app.get( "/api/engines",     proxyToLambda);
-app.get( "/api/suggestions", proxyToLambda);
-app.post("/api/chat",        proxyToLambda);
+app.get( "/api/health",      proxyToApiHandler);
+app.get( "/api/client-auth", issueFrontendToken);
+app.get( "/api/engines",     requireFrontendAuth, proxyToApiHandler);
+app.get( "/api/suggestions", requireFrontendAuth, proxyToApiHandler);
+app.post("/api/chat",        requireFrontendAuth, proxyToApiHandler);
 
 const port = Number(process.env.PORT || 3000);
 app.listen(port, () => {
   console.log(`[lex-chat-ux] API server listening on http://localhost:${port}`);
-  console.log(`[lex-chat-ux] → Lambda: ${FUNCTION_NAME} (region: ${process.env.AWS_REGION || "ap-northeast-2"})`);
+  console.log(`[lex-chat-ux] Backend mode: local unified handler (region: ${process.env.AWS_REGION || "ap-northeast-2"})`);
   console.log(`[lex-chat-ux] Frontend (Quasar): http://localhost:9000`);
+  if (!process.env.FRONTEND_TOKEN_SECRET) {
+    console.warn("[lex-chat-ux] FRONTEND_TOKEN_SECRET 미설정: 기본값으로 동작 중입니다. .env에서 반드시 설정하세요.");
+  }
 });

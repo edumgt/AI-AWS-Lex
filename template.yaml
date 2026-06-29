@@ -1,10 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Chatbot API — Lambda + API Gateway HTTP API
+  Chatbot API — Lambda + API Gateway HTTP API + Cognito JWT authorizer
   GET /api/health · GET /api/engines · GET /api/suggestions · POST /api/chat
 
-# ── 파라미터 ───────────────────────────────────────────────────────────────────
 Parameters:
   LexBotId:
     Type: String
@@ -26,8 +25,22 @@ Parameters:
     Type: String
     Default: "false"
     AllowedValues: ["true", "false"]
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Default: "http://localhost:9000,https://www.edumgt.co.kr"
+  CognitoCallbackUrls:
+    Type: CommaDelimitedList
+    Default: "http://localhost:9000/,https://www.edumgt.co.kr/lex/"
+  CognitoLogoutUrls:
+    Type: CommaDelimitedList
+    Default: "http://localhost:9000/,https://www.edumgt.co.kr/lex/"
+  CognitoDomainPrefix:
+    Type: String
+    Default: ""
 
-# ── 공통 설정 ──────────────────────────────────────────────────────────────────
+Conditions:
+  HasCustomCognitoDomainPrefix: !Not [!Equals [!Ref CognitoDomainPrefix, ""]]
+
 Globals:
   Function:
     Runtime: nodejs22.x
@@ -38,28 +51,110 @@ Globals:
       Variables:
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
 
-# ── 리소스 ────────────────────────────────────────────────────────────────────
 Resources:
+  ChatUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${AWS::StackName}-users"
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      MfaConfiguration: "OFF"
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: false
 
-  # API Gateway HTTP API (CORS 포함)
+  ChatUserPoolResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      Identifier: chatbot-api
+      Name: chatbot-api
+      UserPoolId: !Ref ChatUserPool
+      Scopes:
+        - ScopeName: chat
+          ScopeDescription: Invoke chatbot API routes
+
+  ChatUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${AWS::StackName}-spa"
+      UserPoolId: !Ref ChatUserPool
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+        - chatbot-api/chat
+      CallbackURLs: !Ref CognitoCallbackUrls
+      LogoutURLs: !Ref CognitoLogoutUrls
+      SupportedIdentityProviders:
+        - COGNITO
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+      ExplicitAuthFlows:
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+
+  ChatUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref ChatUserPool
+      Domain: !If
+        - HasCustomCognitoDomainPrefix
+        - !Ref CognitoDomainPrefix
+        - !Sub "${AWS::StackName}-${AWS::AccountId}"
+
   ChatHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: $default
       CorsConfiguration:
-        AllowOrigins:
-          - "*"
+        AllowOrigins: !Ref AllowedOrigins
         AllowHeaders:
-          - "content-type"
-          - "cookie"
-          - "authorization"
+          - content-type
+          - authorization
         AllowMethods:
           - GET
           - POST
           - OPTIONS
+        AllowCredentials: false
         MaxAge: 300
+      Auth:
+        DefaultAuthorizer: CognitoJwtAuthorizer
+        Authorizers:
+          CognitoJwtAuthorizer:
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${ChatUserPool}"
+              audience:
+                - !Ref ChatUserPoolClient
+            AuthorizationScopes:
+              - chatbot-api/chat
 
-  # Lambda 실행 역할
   ChatApiFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -68,7 +163,8 @@ Resources:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Principal: { Service: lambda.amazonaws.com }
+            Principal:
+              Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
@@ -96,7 +192,6 @@ Resources:
                   - logs:PutLogEvents
                 Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
 
-  # 챗봇 API Lambda 함수
   ChatApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -105,18 +200,44 @@ Resources:
       CodeUri: lex-chat-ux/
       Handler: server/lambda.handler
       Events:
-        ApiProxy:
+        HealthRoute:
           Type: HttpApi
           Properties:
-            Path: /{proxy+}
-            Method: ANY
+            Path: /api/health
+            Method: GET
             ApiId: !Ref ChatHttpApi
-        ApiRoot:
+            Auth:
+              Authorizer: NONE
+        EnginesRoute:
           Type: HttpApi
           Properties:
-            Path: /
-            Method: ANY
+            Path: /api/engines
+            Method: GET
             ApiId: !Ref ChatHttpApi
+            Auth:
+              Authorizer: CognitoJwtAuthorizer
+              AuthorizationScopes:
+                - chatbot-api/chat
+        SuggestionsRoute:
+          Type: HttpApi
+          Properties:
+            Path: /api/suggestions
+            Method: GET
+            ApiId: !Ref ChatHttpApi
+            Auth:
+              Authorizer: CognitoJwtAuthorizer
+              AuthorizationScopes:
+                - chatbot-api/chat
+        ChatRoute:
+          Type: HttpApi
+          Properties:
+            Path: /api/chat
+            Method: POST
+            ApiId: !Ref ChatHttpApi
+            Auth:
+              Authorizer: CognitoJwtAuthorizer
+              AuthorizationScopes:
+                - chatbot-api/chat
       Environment:
         Variables:
           LEX_BOT_ID: !Ref LexBotId
@@ -139,17 +260,15 @@ Resources:
           - "@aws-sdk/client-lex-runtime-v2"
           - "@aws-sdk/client-lex-models-v2"
 
-  # CloudWatch 로그 그룹
   ChatApiFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${ChatApiFunction}"
       RetentionInDays: 14
 
-# ── 출력 ──────────────────────────────────────────────────────────────────────
 Outputs:
   ApiGatewayUrl:
-    Description: "API Gateway URL — FE proxy 또는 VITE_API_BASE_URL로 설정"
+    Description: "Protected API Gateway base URL"
     Value: !Sub "https://${ChatHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
 
   ChatApiFunctionArn:
@@ -157,5 +276,33 @@ Outputs:
     Value: !GetAtt ChatApiFunction.Arn
 
   HealthCheckUrl:
-    Description: 헬스체크 엔드포인트
+    Description: Public health endpoint
     Value: !Sub "https://${ChatHttpApi}.execute-api.${AWS::Region}.amazonaws.com/api/health"
+
+  CognitoUserPoolId:
+    Description: Cognito user pool ID
+    Value: !Ref ChatUserPool
+
+  CognitoUserPoolClientId:
+    Description: Cognito app client ID for the SPA
+    Value: !Ref ChatUserPoolClient
+
+  CognitoHostedUiBaseUrl:
+    Description: Cognito Hosted UI base URL
+    Value: !Sub "https://${ChatUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+
+  CognitoIssuer:
+    Description: JWT issuer for API Gateway authorizer
+    Value: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${ChatUserPool}"
+
+  CognitoApiScope:
+    Description: OAuth scope required by the API
+    Value: "chatbot-api/chat"
+
+  CognitoLoginUrl:
+    Description: Sample Hosted UI login URL
+    Value: !Sub
+      - "https://${Domain}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${ClientId}&response_type=code&scope=openid+email+profile+chatbot-api%2Fchat&redirect_uri=${RedirectUri}"
+      - Domain: !Ref ChatUserPoolDomain
+        ClientId: !Ref ChatUserPoolClient
+        RedirectUri: !Select [0, !Ref CognitoCallbackUrls]

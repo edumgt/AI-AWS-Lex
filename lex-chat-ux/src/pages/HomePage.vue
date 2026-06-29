@@ -12,7 +12,23 @@
           <a v-for="item in navItems" :key="item" href="#" class="nav-link">{{ item }}</a>
         </nav>
         <div class="nav-right">
-          <q-btn flat dense label="로그인" text-color="white" class="q-mr-xs" />
+          <q-btn
+            v-if="authEnabled && !isAuthenticated"
+            flat dense
+            :label="authBusy ? '인증 확인 중...' : '로그인'"
+            text-color="white"
+            class="q-mr-xs"
+            :disable="authBusy"
+            @click="login"
+          />
+          <q-btn
+            v-else-if="authEnabled && isAuthenticated"
+            flat dense
+            :label="displayName || '로그아웃'"
+            text-color="white"
+            class="q-mr-xs"
+            @click="logout"
+          />
           <q-btn unelevated dense label="계좌개설" color="white" text-color="primary" class="open-btn" />
         </div>
       </div>
@@ -38,7 +54,7 @@
           <h1 class="hero-title">스마트한 투자의 시작<br><em>KF증권</em>과 함께하세요</h1>
           <p class="hero-sub">전문 투자상담부터 ISA·ETF·해외주식까지<br>AI 챗봇으로 언제든 편리하게 상담받으세요</p>
           <div class="hero-btns">
-            <button class="btn-cta" @click="chatOpen = true">💬 AI 투자상담 시작</button>
+            <button class="btn-cta" @click="openChatOrLogin">💬 AI 투자상담 시작</button>
             <button class="btn-outline">상품 둘러보기</button>
           </div>
         </div>
@@ -78,7 +94,7 @@
           <p>KF증권 대표 투자 솔루션을 만나보세요</p>
         </div>
         <div class="product-grid">
-          <div v-for="p in products" :key="p.title" class="product-card" @click="chatOpen = true">
+          <div v-for="p in products" :key="p.title" class="product-card" @click="openChatOrLogin">
             <div class="p-icon-wrap" :style="{ background: p.bg }">
               <q-icon :name="p.icon" size="28px" :style="{ color: p.color }" />
             </div>
@@ -134,7 +150,7 @@
               <q-icon name="chevron_right" size="15px" color="primary" class="q-mr-xs" />{{ n }}
             </div>
           </div>
-          <div class="event-box" @click="chatOpen = true">
+          <div class="event-box" @click="openChatOrLogin">
             <div class="event-icon">🎁</div>
             <div>
               <div class="event-title">신규 계좌개설 이벤트</div>
@@ -162,7 +178,7 @@
     </footer>
 
     <!-- ═══ CHATBOT ═══ -->
-    <ChatbotButton @open-chat="chatOpen = true" />
+    <ChatbotButton @open-chat="openChatOrLogin" />
     <ChatbotDialog v-model="chatOpen" />
 
   </div>
@@ -170,15 +186,82 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useQuasar } from 'quasar';
 import ChatbotButton from '../components/ChatbotButton.vue';
 import ChatbotDialog from '../components/ChatbotDialog.vue';
+import { useAuthStore } from '../stores/authStore';
+import { pinia } from '../stores/pinia';
 
+const $q = useQuasar();
+const authStore = useAuthStore(pinia);
 const chatOpen = ref(false);
 const scrolled = ref(false);
 const pageRef = ref(null);
 
 const onScroll = () => { scrolled.value = window.scrollY > 8; };
-onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }));
+const authEnabled = computed(() => authStore.enabled);
+const authBusy = computed(() => authStore.authenticating && !authStore.initialized);
+const isAuthenticated = computed(() => !authEnabled.value || authStore.authenticated);
+const displayName = computed(() => authStore.displayName);
+
+const openChatOrLogin = async () => {
+  if (!authEnabled.value) {
+    chatOpen.value = true;
+    return;
+  }
+
+  try {
+    await authStore.initialize();
+    if (authStore.authenticated) {
+      chatOpen.value = true;
+      return;
+    }
+
+    $q.notify({
+      message: '투자상담 챗봇 이용을 위해 로그인해 주세요.',
+      color: 'primary',
+      position: 'top',
+      timeout: 1400
+    });
+    await authStore.beginLogin();
+  } catch (error) {
+    $q.notify({
+      message: error.message || '로그인을 시작하지 못했습니다.',
+      color: 'negative',
+      position: 'top'
+    });
+  }
+};
+
+const login = async () => {
+  try {
+    await authStore.initialize();
+    await authStore.beginLogin();
+  } catch (error) {
+    $q.notify({
+      message: error.message || '로그인을 시작하지 못했습니다.',
+      color: 'negative',
+      position: 'top'
+    });
+  }
+};
+
+const logout = async () => {
+  try {
+    await authStore.logout();
+  } catch (error) {
+    $q.notify({
+      message: error.message || '로그아웃에 실패했습니다.',
+      color: 'negative',
+      position: 'top'
+    });
+  }
+};
+
+onMounted(async () => {
+  window.addEventListener('scroll', onScroll, { passive: true });
+  await authStore.initialize();
+});
 onUnmounted(() => window.removeEventListener('scroll', onScroll));
 
 const todayStr = computed(() => {

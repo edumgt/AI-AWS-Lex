@@ -5,7 +5,7 @@
   "type": "commonjs",
   "main": "server/index.js",
   "scripts": {
-    "dev": "quasar dev",
+    "dev": "concurrently \"quasar dev\" \"node server/index.js\"",
     "build": "quasar build",
     "start": "node server/index.js",
     "server": "node server/index.js"
@@ -39,8 +39,5 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
-  },
-  "overrides": {
-    "vite": "2.9.18"
   }
 }
