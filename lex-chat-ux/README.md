@@ -1,11 +1,11 @@
-# Lex Chat UX v3 (Quasar Framework + Vue 3)
+# KF증권 프론트엔드 + API 서버 (Quasar Framework + Vue 3)
 
-Amazon Lex V2 Runtime 호출 + "대화형 UX" 렌더링 예제입니다.
+KF증권 홈페이지와 AI 투자상담 챗봇을 통합한 메인 실행 패키지입니다.
 
-**🎨 Quasar Framework 기반으로 완전히 재구성됨**
-- 학원 홈페이지 메인 화면
+**주요 구성**
+- KF증권 홈페이지 메인 화면 (주가 티커·금융상품·지점 지도)
 - 우측 하단 플로팅 챗봇 버튼
-- 모달 형태의 대화형 챗봇 인터페이스
+- 모달 형태의 AI 투자상담 챗봇 인터페이스
 - Tailwind CSS + Pretendard 폰트 적용
 - 반응형 디자인 (모바일/태블릿/데스크톱 지원)
 
@@ -101,7 +101,7 @@ lex-chat-ux/
 │   │   ├── ChatbotButton.vue   # 플로팅 챗봇 버튼
 │   │   └── ChatbotDialog.vue   # 챗봇 대화 모달
 │   ├── pages/               # 페이지 컴포넌트
-│   │   └── HomePage.vue        # 학원 홈페이지
+│   │   └── HomePage.vue        # KF증권 홈페이지
 │   ├── stores/              # Pinia 스토어
 │   │   └── chatStore.js        # 챗봇 상태 관리
 │   ├── router/              # Vue Router

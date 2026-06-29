@@ -1,530 +1,285 @@
-# Amazon Lex V2 + Node.js 실습 패키지
+# KF증권 AI 투자상담 챗봇 플랫폼
 
-![](./sample.png)
+![KF증권 홈페이지](./sample.png)
 
-## 오늘 예약 리마인더 모달
+## 프로젝트 개요
 
-다음 접속 시 localStorage에 저장된 예약 정보의 날짜가 오늘과 같으면 홈페이지에서 바로 예약 확인 모달이 뜹니다. 아래 예시는 `2026-04-03` 기준 금일 예약 더미 데이터를 넣어 캡처한 화면입니다.
+**KF증권** 홈페이지와 AI 투자상담 챗봇을 통합한 웹 애플리케이션입니다.
+
+고객은 홈페이지에서 실시간 시세·금융상품 정보를 확인하고, AI 챗봇으로 지점 투자상담을 예약·조회·취소할 수 있습니다.
+챗봇 엔진은 **Amazon Lex V2(AWS)**, **Azure CLU**, **Ollama 온프렘** 세 가지를 지원하며 환경변수 한 줄로 전환할 수 있습니다.
+
+---
+
+## 주요 기능
+
+### 홈페이지
+
+| 기능 | 설명 |
+|---|---|
+| 실시간 주가 티커 | KOSPI·KOSDAQ·해외 주요 지수 실시간 스크롤 표시 |
+| 오늘의 주요 지수 | HERO 패널에 장마감 기준 지수·등락 표시 |
+| 추천 금융상품 | ETF·ISA·국내주식·해외주식·ELS·채권·펀드·연금저축 카드 |
+| 지점/WM/PB센터 지도 | 여의도·종로·압구정·강남·판교 5개 지점 위치 안내 |
+| 오늘 예약 리마인더 | 당일 상담 예약이 있을 경우 홈페이지 접속 시 확인 모달 표시 |
+| Cognito 로그인 | AWS Cognito 기반 고객 로그인·로그아웃·계좌개설 버튼 |
 
 ![오늘 예약 리마인더 모달](lex-chat-ux/screenshots/today-reservation-modal.png)
 
+### AI 투자상담 챗봇
 
-
-이 레포는 **Amazon Lex V2 챗봇**을 구축하고, **Lambda Fulfillment(Node.js)** 및 **Express API 서버**를 통해
-**Lex Runtime V2(RecognizeText)** 를 호출하는 전체 흐름을 실습하도록 구성되어 있습니다.
-
-핵심 목표는 다음 3가지입니다.
-- Lex V2 봇(인텐트/슬롯/로케일/앨리어스) 설계 및 빌드
-- Lambda Fulfillment로 예약/조회/취소 대화 처리
-- Node.js API(`/chat`)를 통한 외부 앱 연동 패턴 이해
-
----
-# Amazon Lex V2 개념 정리 (Intent / Slot / Locale / Alias)
-
-## 1. Bot
-**Bot(봇)**은 전체 챗봇 애플리케이션입니다.  
-사용자와 대화하면서 질문을 이해하고, 필요한 값을 받고, 결과를 반환하는 전체 시스템 단위입니다.
-
-- Lex V2에서 모든 구성요소는 Bot 안에 포함됨
-- Intent, Slot, Locale 등이 모두 Bot 내부 구성요소
+| Intent | 기능 | 수집 슬롯 |
+|---|---|---|
+| `BookConsultation` | 투자상담 예약 | 지점, 상품유형, 날짜, 시간, 고객명, 연락처 |
+| `CheckConsultation` | 예약 조회 | 예약번호(또는 세션 내 최근 예약) |
+| `CancelConsultation` | 예약 취소 | 예약번호(또는 세션 내 최근 예약) |
+| `ProductInfo` | 금융상품 안내 | 상품유형(선택) |
+| `Help` | 기능 안내/도움말 | - |
 
 ---
 
-## 2. Intent
-**Intent(인텐트)**는 사용자의 **의도**입니다.  
-사용자가 무엇을 하려고 하는지를 의미합니다.
+## 기술 스택
 
-### 예시
-- "회의실 예약해줘" → `ReserveMeetingRoom`
-- "주문 상태 확인" → `CheckOrderStatus`
-- "비밀번호 변경" → `ChangePassword`
+### 프론트엔드
+- **Framework**: Vue 3 + Quasar Framework
+- **Styling**: Tailwind CSS + Pretendard Font
+- **상태 관리**: Pinia (`authStore`, `chatStore`)
+- **인증**: AWS Cognito (OAuth 2.0 / Authorization Code Flow)
 
-### 핵심
-- 사용자 발화를 분석해서 어떤 Intent인지 판단
-- Sample Utterance(샘플 문장)를 기반으로 학습
+### 백엔드
+- **API 서버**: Express.js (Node.js 18+)
+- **Lex 통합**: `@aws-sdk/client-lex-runtime-v2`
+- **인증 검증**: Cognito JWT Authorizer (API Gateway)
 
----
+### AWS 인프라 (SAM)
+- **챗봇 NLU**: Amazon Lex V2 (`ko_KR`)
+- **Fulfillment**: AWS Lambda (Node.js 18)
+- **API**: API Gateway HTTP API
+- **인증**: Amazon Cognito User Pool
 
-## 3. Slot
-**Slot(슬롯)**은 Intent를 처리하기 위해 필요한 **입력 값(파라미터)**입니다.
-
-### 예시 (항공권 예약)
-- 출발지
-- 도착지
-- 날짜
-- 인원수
-
-### 핵심
-- Intent = 무엇을 할지  
-- Slot = 그 일을 하기 위한 데이터
-- 값이 없으면 사용자에게 질문하여 채움
+### 대체 챗봇 엔진
+- **Azure CLU**: Azure Language Service (Conversational Language Understanding)
+- **Ollama 온프렘**: 로컬/사내 LLM (exaone3.5, qwen2.5 등)
 
 ---
 
-## 4. Locale
-**Locale(로케일)**은 봇의 **언어 및 지역 설정**입니다.
-
-### 예시
-- `ko_KR` → 한국어 (대한민국)
-- `en_US` → 영어 (미국)
-- `ja_JP` → 일본어 (일본)
-
-### 특징
-- 언어별로 Intent / 발화 / 응답 별도 구성 가능
-- 다국어 챗봇 구현 가능
-
----
-
-## 5. Alias
-**Alias(앨리어스)**는 특정 Bot 버전을 가리키는 **별칭**입니다.
-
-### 예시
-- `DEV` → 개발용
-- `BETA` → 테스트용
-- `PROD` → 운영용
-
-### 핵심
-- 실제 서비스에서는 버전 대신 Alias 사용
-- 운영 중에도 버전 교체 가능 (무중단 배포 가능)
-
----
-
-## 전체 구조 요약
-
-| 구성요소 | 의미 |
-|----------|------|
-| Bot | 챗봇 전체 |
-| Intent | 사용자 의도 |
-| Slot | 입력 값 (파라미터) |
-| Locale | 언어/지역 |
-| Alias | 버전 별칭 |
-
----
-
-## 예시: 병원 예약 챗봇
-
-- **Bot**: 병원 예약 시스템
-- **Intent**:
-  - 진료예약
-  - 예약조회
-  - 예약취소
-- **Slot**:
-  - 진료과
-  - 예약일
-  - 환자명
-  - 연락처
-- **Locale**:
-  - ko_KR
-  - en_US
-- **Alias**:
-  - DEV
-  - PROD
-
----
-
-## 설계 및 빌드 흐름
-
-1. Bot 생성
-2. Intent 정의 (사용자 의도 구분)
-3. Slot 정의 (필요 데이터 정의)
-4. Sample Utterance 작성
-5. Locale 설정 (언어)
-6. Bot Build 수행
-7. Version 생성
-8. Alias 연결 (배포)
-
----
-
-## 한 줄 정리
-
-- Bot = 챗봇 전체  
-- Intent = 사용자의 목적  
-- Slot = 필요한 입력값  
-- Locale = 언어 설정  
-- Alias = 배포 버전 연결  
-
----
-
----
-
-## 1) 기술 스택
-
-### AWS (기본)
-- **클라우드**: AWS Lex V2, AWS Lambda, IAM, CloudWatch
-- **런타임/언어**: Node.js 18+, JavaScript(CommonJS)
-- **SDK/CLI**:
-  - AWS SDK for JavaScript v3 (`@aws-sdk/client-lex-runtime-v2`, `@aws-sdk/client-lex-models-v2`, `@aws-sdk/client-iam`, `@aws-sdk/client-sts`)
-  - AWS CLI v2
-- **서버**: Express
-- **권장 리전**: `ap-northeast-2` (서울)
-
-### MS Azure (추가)
-- **클라우드**: Azure Language Service (CLU), Azure Functions, Azure Monitor
-- **SDK**: `@azure/ai-language-conversations`, `@azure/core-auth`
-- **서버**: Express (포트 3100)
-
-### Ollama 온프렘 (추가)
-- **LLM 런타임**: [Ollama](https://ollama.ai) (로컬/사내 서버)
-- **모델 예시**: llama3, exaone3.5(한국어), qwen2.5
-- **서버**: Express (포트 3200), 외부 SDK 의존성 없음
-
----
-
-## 2) 프로젝트 구조와 역할
+## 프로젝트 구조
 
 ```text
 .
 ├─ README.md
-├─ docs/
-│  ├─ assets/                     # 이미지·다이어그램 (README 참조용)
-│  ├─ lex-design.md               # [AWS] 인텐트/슬롯 설계표 + 콘솔 체크리스트
-│  ├─ azure-design.md             # [Azure] CLU 인텐트/엔티티 설계표
-│  └─ utterances-100.md           # Intent별 샘플 발화 100개 (AWS/Azure 공용)
+├─ template.yaml                  # SAM 인프라 정의 (Cognito·Lambda·API GW)
+├─ samconfig.toml                 # SAM 배포 설정
+├─ docker-compose.yml             # 전체 스택 컨테이너 실행
 │
-├─ lex-chat-ux/                   # 프론트엔드 + 통합 API 서버 (메인 실행 패키지)
+├─ lex-chat-ux/                   # 메인 실행 패키지 (프론트엔드 + API 서버)
 │  ├─ src/                        # Quasar/Vue 3 SPA
-│  ├─ public/                     # 순수 HTML/JS 경량 UI (대안 프론트엔드)
-│  ├─ server/                     # Express 통합 서버 (포트 3000, npm run dev로 실행)
+│  │  ├─ pages/HomePage.vue       # KF증권 홈페이지
+│  │  ├─ components/
+│  │  │  ├─ ChatbotButton.vue     # 플로팅 챗봇 버튼
+│  │  │  ├─ ChatbotDialog.vue     # 챗봇 대화 모달
+│  │  │  └─ BranchMapCard.vue     # 지점 위치 지도
+│  │  └─ stores/
+│  │     ├─ authStore.js          # Cognito 인증 상태
+│  │     └─ chatStore.js          # 챗봇 대화 상태
+│  ├─ server/                     # Express 통합 서버 (포트 3000)
 │  │  ├─ index.js                 # 엔진 라우터 (/api/chat, /api/engines)
 │  │  ├─ lexClient.js             # AWS Lex Runtime V2 래퍼
 │  │  ├─ lexFormatter.js          # Lex 응답 → UX 포맷 변환
-│  │  ├─ onpremClient.js          # 온프렘 엔진 (Ollama, Rasa, Azure CLU) 라우팅
+│  │  ├─ onpremClient.js          # Ollama·Azure CLU 라우팅
 │  │  ├─ reservationFlow.js       # 직접 예약 흐름 처리 (슬롯 수집)
-│  │  ├─ suggestions.js           # 슬롯 자동완성 목록
-│  │  └─ lambdaClient.js          # AWS Lambda 직접 호출 (옵션)
-│  ├─ shared/
-│  │  └─ campusLocations.json     # 캠퍼스 위치 데이터 (서버+프론트 공유)
-│  ├─ screenshots/                # UI 스크린샷
-│  └─ package.json                # 전체 의존성 (Quasar + Express + AWS SDK)
+│  │  └─ suggestions.js           # 슬롯 자동완성 목록
+│  └─ shared/
+│     └─ campusLocations.json     # 지점 위치 데이터 (서버+프론트 공유)
 │
-├─ server/                        # 경량 단독 서버 (Lex + 다중 엔진 라우터)
-│  ├─ index.js                    # /health, /engines, /chat (엔진 프록시 포함)
-│  ├─ lexClient.js                # AWS Lex Runtime V2 래퍼
-│  └─ package.json
+├─ lambda/
+│  └─ fulfillment.js              # Lex Fulfillment Lambda 핸들러
 │
-├─ azure/                         # [Azure CLU] 챗봇 구현
+├─ docs/
+│  ├─ lex-design.md               # 인텐트·슬롯 설계표 + 콘솔 체크리스트
+│  ├─ azure-design.md             # Azure CLU 인텐트·엔티티 설계표
+│  └─ utterances-100.md           # Intent별 샘플 발화 100개
+│
+├─ infra/
+│  ├─ README.md                   # 인프라 자동 생성 매뉴얼
+│  ├─ lex-bootstrap.sh/py/js      # Lex 봇 자동 생성 스크립트
+│  └─ apigwinstall.sh             # API Gateway 일괄 생성 스크립트
+│
+├─ scripts/
+│  ├─ setup-finance-chatbot.sh    # Lex 기본 구성 (Lambda 제외)
+│  ├─ setup-finance-intents.sh    # 기존 봇 인텐트·슬롯 재반영
+│  ├─ provision-finance-chatbot.sh # Lambda 배포 → Lex 생성 → 검증 일괄 실행
+│  └─ seed-testcases.json         # 금융투자 상담 테스트 시나리오
+│
+├─ azure/                         # Azure CLU 구현체
 │  ├─ README.md
-│  ├─ server/                     # Express API (포트 3100)
-│  └─ functions/                  # Azure Functions 핸들러
+│  └─ server/                     # Express API (포트 3100)
 │
-├─ ollama/                        # [Ollama 온프렘 LLM] 챗봇 구현
+├─ ollama/                        # Ollama 온프렘 LLM 구현체
 │  ├─ README.md
 │  └─ server/                     # Express API (포트 3200)
 │
-├─ rasa/                          # [Rasa ML NLU] 챗봇 구현
+├─ rasa/                          # Rasa ML NLU 구현체
 │  ├─ README.md
-│  ├─ config.yml                  # NLU 파이프라인 (DIETClassifier + char n-gram)
-│  ├─ domain.yml                  # 인텐트·슬롯·응답·폼 정의
-│  ├─ data/                       # 한국어 학습 데이터 (nlu/stories/rules)
-│  ├─ actions/                    # Python 커스텀 액션 (예약 처리)
-│  ├─ docker-compose.yml          # Rasa + Actions + Node 어댑터 일괄 실행
 │  └─ server/                     # Node.js 어댑터 (포트 3300)
 │
-├─ lambda/
-│  └─ fulfillment.js              # [AWS] Lex Fulfillment Lambda 핸들러
-│
-├─ infra/
-│  ├─ README.md
-│  ├─ lex-bootstrap.sh / .py / .js  # Lex 봇 자동 생성 스크립트
-│  ├─ apigwinstall.sh             # API Gateway + Lambda 일괄 생성 스크립트
-│  └─ config.example.env
-│
-├─ scripts/
-│  ├─ seed-testcases.json         # 금융투자 상담 테스트 시나리오(단발+멀티턴)
-│  ├─ setup-finance-chatbot.sh    # Lambda 없이 챗봇/Lex 기본 구성
-│  ├─ setup-finance-intents.sh    # Lambda 없이 기존 봇 의도/슬롯 재반영
-│  └─ provision-finance-chatbot.sh # Lambda 배포 → Lex 생성 → seed 검증 일괄 실행
-│
 └─ postman/
-   ├─ Lex-Lab.postman_collection.json
-   └─ Lex-Lab.postman_environment.json
+   └─ Lex-Lab.postman_collection.json
 ```
-
-> **실행 진입점**: `cd lex-chat-ux && npm run dev`  
-> 프론트엔드(Quasar, :9000)와 API 서버(:3000)가 동시에 시작됩니다.
 
 ---
 
-## 3) 런타임 아키텍처(요약)
+## 아키텍처
+
+### 런타임 흐름
 
 ```mermaid
 flowchart TD
-    A[사용자\n웹/모바일/Postman] -->|POST /chat| B[Express API\nserver/index.js]
-    B --> C[입력값 검증\ntext/sessionId]
-    C --> D[Lex Runtime 호출\nserver/lexClient.js\nRecognizeText]
-    D --> E[Amazon Lex V2\nIntent/Slot 해석]
-    E -->|Fulfillment 필요| F[Lambda\nlambda/fulfillment.js]
-    E -->|Fulfillment 불필요| G[Lex 응답 생성]
-    F --> G
-    G --> H[Express 응답 포맷팅\nintent/state/messages/slots/raw]
-    H --> I[클라이언트 응답 반환]
+    A[고객\n웹 브라우저] -->|Cognito 로그인| B[Amazon Cognito\nUser Pool]
+    B -->|JWT 토큰 발급| A
+    A -->|POST /api/chat\n+ Bearer JWT| C[Express API 서버\nlex-chat-ux/server]
+    C --> D{AI 엔진 선택}
+    D -->|aws-lex| E[Amazon Lex V2\nRecognizeText]
+    D -->|azure-clu| F[Azure CLU\nanalyzeConversation]
+    D -->|ollama| G[Ollama 로컬 LLM]
+    E -->|Fulfillment| H[AWS Lambda\nfulfillment.js]
+    H --> I[응답 반환]
+    E --> I
+    F --> I
+    G --> I
+    I --> A
 ```
 
-1. 사용자가 클라이언트(웹/모바일/Postman)에서 `POST /chat` 호출
-2. Express 서버(`server/index.js`)가 입력 텍스트를 검증
-3. `server/lexClient.js`가 `RecognizeText`를 Lex Runtime V2에 전달
-4. Lex가 의도(Intent)/슬롯(Slot)을 해석
-5. Fulfillment가 필요한 인텐트면 Lambda(`lambda/fulfillment.js`) 실행
-6. Lambda 응답(`sessionState`, `messages`)이 Lex를 통해 서버로 반환
-7. 서버는 `intent`, `state`, `messages`, `slots`, `raw` 형태로 응답
+### AWS 인프라 (SAM)
+
+```mermaid
+flowchart LR
+    Client -->|HTTPS| APIGW[API Gateway\nHTTP API]
+    APIGW -->|JWT 검증| Cognito[Cognito\nUser Pool]
+    APIGW -->|인증 통과| Lambda[Lambda\nfulfillment.js]
+    Lambda <-->|RecognizeText| Lex[Amazon Lex V2\nko_KR]
+```
 
 ---
 
-## 4) AWS CLI 설정 (추가)
+## 빠른 시작
 
-아래는 **로컬에서 이 프로젝트를 실행하기 위한 AWS CLI 기본 설정 절차**입니다.
-
-### 4-1. AWS CLI 설치 확인
+### 1. 환경변수 설정
 
 ```bash
-aws --version
+cp .env.example .env
 ```
 
-### 4-2. 자격 증명 설정
+`.env` 주요 설정:
 
-#### 방법 A) 기본 프로파일 사용
+```env
+# AWS Lex V2
+AWS_REGION=ap-northeast-2
+LEX_BOT_ID=<your-bot-id>
+LEX_BOT_ALIAS_ID=<your-alias-id>
+LEX_LOCALE_ID=ko_KR
+DEFAULT_AI_ENGINE=aws-lex
+
+# 슬롯 자동완성 목록
+BRANCH_VALUES=강남WM센터,여의도지점,압구정PB센터,종로지점,판교지점
+PRODUCT_VALUES=국내주식,해외주식,ETF,ELS,채권,펀드,ISA,연금저축
+```
+
+### 2. 의존성 설치 및 실행
+
+```bash
+cd lex-chat-ux
+npm install
+npm run dev
+```
+
+- 프론트엔드: `http://localhost:9000`
+- API 서버: `http://localhost:3000`
+
+### 3. Docker로 전체 스택 실행
+
+```bash
+docker-compose up
+```
+
+---
+
+## AWS CLI 설정
+
+### 자격 증명
 
 ```bash
 aws configure
+# AWS Access Key ID: <YOUR_ACCESS_KEY_ID>
+# AWS Secret Access Key: <YOUR_SECRET_ACCESS_KEY>
+# Default region name: ap-northeast-2
+# Default output format: json
 ```
 
-입력값 예시:
-- AWS Access Key ID: `<YOUR_ACCESS_KEY_ID>`
-- AWS Secret Access Key: `<YOUR_SECRET_ACCESS_KEY>`
-- Default region name: `ap-northeast-2`
-- Default output format: `json`
-
-#### 방법 B) 별도 프로파일(`lexlab`) 사용
-
-```bash
-aws configure --profile lexlab
-```
-
-그리고 셸에서 프로파일 지정:
-
-```bash
-export AWS_PROFILE=lexlab
-```
-
-### 4-3. 자격 증명 유효성 검증
+### 검증
 
 ```bash
 aws sts get-caller-identity
 ```
 
-계정 ID/ARN이 정상 출력되면 인증 성공입니다.
+### 최소 필요 권한
 
-### 4-4. 필수 권한(최소)
-
-실습 계정/사용자(또는 역할)에 아래 권한이 필요합니다.
-- `lex:RecognizeText` (런타임 호출)
-- `lex:*` 또는 생성 스크립트에 필요한 Lex 모델 권한 (자동 생성 시)
-- `lambda:InvokeFunction` (Lex ↔ Lambda 연동)
-- `iam:CreateRole`, `iam:AttachRolePolicy`, `iam:PassRole` (자동 생성 스크립트로 역할 생성 시)
-
-> 운영 환경에서는 최소 권한 원칙에 따라 세분화된 정책을 권장합니다.
-
----
-
-## 5) 로컬 서버 실행
-
-### 5-1. 의존성 설치
-
-```bash
-cd server
-npm i
-```
-
-### 5-2. 환경 변수 설정
-
-```bash
-export AWS_REGION=ap-northeast-2
-export LEX_BOT_ID=
-export LEX_BOT_ALIAS_ID=
-export LEX_LOCALE_ID=ko_KR
-```
-
-### 5-3. 서버 시작
-
-```bash
-node index.js
-```
-
-- 기본 포트: `3000`
-- 헬스체크: `GET http://localhost:3000/health`
-- 챗 엔드포인트: `POST http://localhost:3000/chat`
-
-### 5-4. API 호출 예시
-
-```bash
-curl -s http://localhost:3000/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"강남점 토익 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
-```
-
----
-
-## 6) Lex 봇 준비 방법
-
-### 방법 A) 콘솔 수동 구성
-
-- `docs/lex-design.md`를 따라 인텐트/슬롯 생성
-- 로케일: `ko_KR`
-- 빌드 후 Alias(예: DEV) 생성
-- Alias에 Lambda 코드훅 연결
-
-### 방법 B) infra 스크립트 자동 구성
-
-- `infra/config.example.env`를 `infra/config.env`로 복사 후 값 설정
-- 아래 중 하나 실행
-  - `python3 infra/lex-bootstrap.py` (AWS CLI, Python / 권장)
-  - `bash infra/lex-bootstrap.sh` (Python 스크립트 래퍼)
-  - `node infra/lex-bootstrap.js` (AWS SDK)
-- `sh` 기준으로 먼저 실행하려면:
-  - `bash scripts/setup-finance-chatbot.sh`
-  - 의도/슬롯만 다시 반영하려면 `bash scripts/setup-finance-intents.sh`
-- 위 두 스크립트는 기본값으로 Lambda 단계를 건너뜁니다.
-- Lambda 생성/업데이트부터 테스트 검증까지 한 번에 반영하려면:
-  - `bash scripts/provision-finance-chatbot.sh`
-  - 새 Lambda를 만들어야 하는 경우 `LAMBDA_EXEC_ROLE_ARN`도 함께 설정
-- 생성 결과로 `BOT_ID`, `BOT_ALIAS_ID`를 받아 서버 환경변수에 반영
-
-자동 생성 상세는 `infra/README.md` 참고.
-
----
-
-## 7) 문서(`.md`) 상세 안내
-
-### 7-1. `docs/lex-design.md`
-
-이 문서는 **대화 모델 설계 기준서**입니다.
-- 인텐트 목적/필수 슬롯/Fulfillment 연결 여부
-- `BranchType`, `ProductType` 같은 커스텀 슬롯 타입 예시
-- `BookConsultation` 슬롯 우선순위 설계 방향
-- 콘솔 체크리스트(빌드, Alias, Lambda 권한, 로그)
-
-즉, “어떤 봇을 어떻게 구성할지”에 대한 설계와 점검 항목을 제공합니다.
-
-### 7-2. `docs/utterances-100.md`
-
-이 문서는 **NLU 학습/검증용 샘플 발화 세트**입니다.
-- BookConsultation / CheckConsultation / CancelConsultation / ProductInfo / Help
-- 각 Intent별 20개, 총 100개 문장
-- 콘솔 테스트 창 수동 검증 또는 대량 테스트 시나리오 작성에 유용
-
-즉, “사용자가 실제로 어떻게 말할지”를 Intent별로 폭넓게 커버합니다.
-
-### 7-3. `infra/README.md`
-
-이 문서는 **인프라 자동 생성 실행 매뉴얼**입니다.
-- CLI/SDK 두 방식의 실행 절차
-- `config.env` 주요 설정값 설명
-- 실행 완료 후 서버 연동 방법
-
-즉, 콘솔 수작업 대신 스크립트로 재현 가능한 구축 절차를 제공합니다.
-
----
-
-## 8) Lambda Fulfillment 배포 요약
-
-`lambda/fulfillment.js`를 Lambda(Node.js 18+)에 배포하고,
-Lex Alias에 Fulfillment 코드훅으로 연결합니다.
-
-현재 Lambda 구현은 **데모 목적**으로 세션 속성(`sessionAttributes`)에 최근 예약 정보를 저장합니다.
-운영에서는 DynamoDB/RDS 같은 영속 스토리지로 대체하는 것을 권장합니다.
-
----
-
-## 9) Postman 테스트
-
-`postman/`의 컬렉션/환경 파일을 import 후,
-환경변수 `BASE_URL=http://localhost:3000` 설정 뒤 요청을 실행하세요.
-
----
-
-## 10) 참고/주의사항
-
-- 기본 로케일은 `ko_KR` 기준이며, 다국어 확장 시 로케일별 모델 분리를 권장합니다.
-- Alias 기반(DEV/PROD) 배포 전략을 사용하면 안정적인 변경 반영이 가능합니다.
-- Lambda/Express 로그를 CloudWatch 및 콘솔 로그로 함께 추적하면 문제 분석이 쉽습니다.
-
----
-
-## 11) MS Azure 기반 구현
-
-동일한 학원 예약/상담 도메인을 **Microsoft Azure** 서비스로 구현한 버전입니다.
-
-### Azure 아키텍처 요약
-
-```mermaid
-flowchart TD
-    A[사용자] -->|POST /chat| B[Express API\nazure/server/index.js]
-    B --> C[Azure CLU\nazureClient.js]
-    C --> D[Azure Language Service\nCLU 프로젝트]
-    D --> E[인텐트/엔티티 응답]
-    E --> F[Fulfillment 처리\nazure/functions/fulfillment.js]
-    F --> G[클라이언트 응답]
-```
-
-### AWS vs Azure 서비스 대응
-
-| AWS | Azure |
+| 권한 | 용도 |
 |---|---|
-| Amazon Lex V2 | Azure Language Service — CLU |
-| AWS Lambda | Azure Functions (Node.js v4) |
-| AWS CloudWatch | Azure Monitor / Application Insights |
-| AWS IAM | Azure Managed Identity / RBAC |
-
-### Azure 빠른 시작
-
-```bash
-# 환경변수 설정
-export AZURE_LANGUAGE_ENDPOINT="https://<your-resource>.cognitiveservices.azure.com"
-export AZURE_LANGUAGE_KEY="<Key1>"
-export AZURE_CLU_PROJECT="AcademyBot"
-export AZURE_CLU_DEPLOYMENT="production"
-
-# 의존성 설치 및 서버 실행 (포트 3100)
-cd azure/server && npm install && node index.js
-```
-
-### Azure 관련 파일
-
-```text
-azure/
-├─ README.md                     # Azure 상세 설정 가이드
-├─ server/
-│  ├─ index.js                   # Express API (포트 3100)
-│  ├─ azureClient.js             # Azure CLU analyzeConversation 래퍼
-│  └─ package.json
-└─ functions/
-   └─ fulfillment.js             # Azure Functions + 인텐트 처리 로직
-docs/
-└─ azure-design.md               # Azure CLU 인텐트/엔티티 설계표
-```
-
-> 상세 내용은 [`azure/README.md`](azure/README.md) 및 [`docs/azure-design.md`](docs/azure-design.md) 참고
+| `lex:RecognizeText` | 챗봇 런타임 호출 |
+| `lex:*` | Lex 봇 생성·관리 (자동 구성 시) |
+| `lambda:InvokeFunction` | Lex ↔ Lambda Fulfillment |
+| `iam:CreateRole`, `iam:AttachRolePolicy` | Lambda 실행 역할 생성 시 |
 
 ---
 
-## 12) Ollama 온프렘(On-Premises) LLM 구현
+## Lex 봇 구성
 
-**Ollama**를 사용해 클라우드 API 없이 로컬/온프렘 환경에서 동일한 챗봇을 구현합니다.  
-인터넷 차단 환경, 데이터 보안이 중요한 환경에 적합합니다.
+### 방법 A) 스크립트 자동 구성 (권장)
 
-### Ollama 아키텍처 요약
+```bash
+# Lex + Lambda 전체 구성 (권장)
+bash scripts/provision-finance-chatbot.sh
 
-```mermaid
-flowchart TD
-    A[사용자] -->|POST /chat| B[Express API\nollama/server/index.js]
-    B --> C[세션 이력 관리]
-    C --> D[Ollama REST API\nollamaClient.js]
-    D --> E[Ollama 데몬\nlocalhost:11434]
-    E --> F[로컬 LLM\nexaone3.5 / qwen2.5 등]
-    F --> G[자연어 응답 반환]
+# Lex 기본 구성만 (Lambda 제외)
+bash scripts/setup-finance-chatbot.sh
+
+# 기존 봇에 인텐트·슬롯만 재반영
+bash scripts/setup-finance-intents.sh
 ```
 
-### 세 플랫폼 비교
+생성 완료 후 `.env`에 `LEX_BOT_ID`, `LEX_BOT_ALIAS_ID` 반영.
+
+### 방법 B) 콘솔 수동 구성
+
+`docs/lex-design.md`의 설계표를 참고하여 콘솔에서 직접 생성:
+- 로케일: `ko_KR`
+- 인텐트: `BookConsultation`, `CheckConsultation`, `CancelConsultation`, `ProductInfo`, `Help`
+- Alias: `DEV` / `PROD`
+- Lambda Fulfillment 코드훅 연결
+
+---
+
+## SAM 배포 (AWS 인프라 전체)
+
+```bash
+# 빌드
+sam build
+
+# 배포 (최초)
+sam deploy --guided
+
+# 재배포
+sam deploy
+```
+
+`samconfig.toml`에 스택 이름, 리전, Cognito 콜백 URL 등을 설정합니다.
+
+---
+
+## 대체 챗봇 엔진
+
+### 엔진 비교
 
 | 항목 | AWS Lex V2 | Azure CLU | Ollama (온프렘) |
 |---|---|---|---|
@@ -534,210 +289,80 @@ flowchart TD
 | NLU 방식 | 인텐트/슬롯 | 인텐트/엔티티 | LLM 자연어 이해 |
 | 학습 필요 | O | O | X (프롬프트만) |
 
-### Ollama 빠른 시작
+### Azure CLU 빠른 시작
+
+```bash
+export AZURE_LANGUAGE_ENDPOINT="https://<your-resource>.cognitiveservices.azure.com"
+export AZURE_LANGUAGE_KEY="<Key>"
+export AZURE_CLU_PROJECT=FinanceInvestBot
+export AZURE_CLU_DEPLOYMENT=production
+
+cd azure/server && npm install && node index.js  # 포트 3100
+```
+
+상세 내용은 [`azure/README.md`](azure/README.md) 참고.
+
+### Ollama 온프렘 빠른 시작
 
 ```bash
 # 1. Ollama 설치 (Linux)
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# 2. 모델 다운로드 (한국어 지원)
-ollama pull exaone3.5      # LG AI Research 한국어 특화 (권장)
-ollama pull qwen2.5        # 다국어 지원
+# 2. 한국어 모델 다운로드
+ollama pull exaone3.5   # LG AI Research 한국어 특화 (권장)
 
-# 3. Ollama 서버 시작
-ollama serve
-
-# 4. Express 서버 실행 (포트 3200)
+# 3. 서버 실행 (포트 3200)
 cd ollama/server && npm install
 export OLLAMA_MODEL=exaone3.5
 node index.js
 ```
 
-### Ollama 관련 파일
-
-```text
-ollama/
-├─ README.md                     # Ollama 상세 설정 가이드
-└─ server/
-   ├─ index.js                   # Express API (포트 3200)
-   ├─ ollamaClient.js            # Ollama /api/chat 래퍼
-   └─ package.json
-```
-
-> 상세 내용은 [`ollama/README.md`](ollama/README.md) 참고
+상세 내용은 [`ollama/README.md`](ollama/README.md) 참고.
 
 ---
 
-### AWS Infra Architecture
+## API 엔드포인트
 
-![AWS 인프라 아키텍처](./docs/assets/aws-infra.png)
+| Method | Path | 설명 |
+|---|---|---|
+| POST | `/api/chat` | 챗봇 대화 처리 (engine 파라미터로 엔진 선택) |
+| GET | `/api/suggestions` | 슬롯 자동완성 후보 목록 (`?slot=Branch\|ProductType`) |
+| GET | `/api/engines` | 활성화된 AI 엔진 목록 |
+| GET | `/health` | 서버 헬스체크 |
 
-## API GW 기초 부터 붙여보기
-```
-arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment
-```
----
-```
-REGION=ap-northeast-2
-LAMBDA_ARN="arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment"
+### 요청 예시
 
-aws apigatewayv2 create-api \
-  --region "$REGION" \
-  --name "my-http-api" \
-  --protocol-type HTTP \
-  --target "$LAMBDA_ARN"
-```
----
-```
-ACCOUNT_ID="086015456585"
-API_ID="n67z2umjee"
-
-aws lambda add-permission \
-  --region "$REGION" \
-  --function-name LexReservationFulfillment \
-  --statement-id apigw-invoke \
-  --action lambda:InvokeFunction \
-  --principal apigateway.amazonaws.com \
-  --source-arn "arn:aws:execute-api:${REGION}:${ACCOUNT_ID}:${API_ID}/*/*/*"
-```
----
-## 관련 문서 : https://chatgpt.com/share/69a0f811-9f40-8007-b939-1b963a13144e
-
----
-```
-API_ID="n67z2umjee"
-
-aws apigatewayv2 create-integration \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --integration-type AWS_PROXY \
-  --integration-uri "$LAMBDA_ARN" \
-  --payload-format-version "2.0"
-```
----
-```
-root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# API_ID="n67z2umjee"
-
-aws apigatewayv2 create-integration \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --integration-type AWS_PROXY \
-  --integration-uri "$LAMBDA_ARN" \
-  --payload-format-version "2.0"
-{
-    "ConnectionType": "INTERNET",
-    "IntegrationId": "m256q0e",
-    "IntegrationMethod": "POST",
-    "IntegrationType": "AWS_PROXY",
-    "IntegrationUri": "arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment",
-    "PayloadFormatVersion": "2.0",
-    "TimeoutInMillis": 30000
-}
-```
----
-```
-INTEGRATION_ID="m256q0e"
-aws apigatewayv2 create-route \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --route-key "POST /chat" \
-  --target "integrations/$INTEGRATION_ID"
-```
----
-```
-root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# aws apigatewayv2 create-deployment \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --stage-name "dev"
-
-An error occurred (BadRequestException) when calling the CreateDeployment operation: Stage dev does not exist. StageName specified on a CreateDeployment request must exist so the stage can be updated with the new deployment.
+```bash
+curl -s http://localhost:3000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"여의도지점 ETF 상담 7월 15일 오후 2시 예약해줘","sessionId":"user-001"}'
 ```
 
 ---
-```
-aws apigatewayv2 create-route \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --route-key "GET /health" \
-  --target "integrations/m256q0e"
 
-curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
+## Postman 테스트
 
+`postman/` 디렉터리의 컬렉션·환경 파일을 import 후 `BASE_URL=http://localhost:3000` 설정하여 실행합니다.
 
-```
-root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
-HTTP/2 500 
-date: Fri, 27 Feb 2026 02:43:04 GMT
-content-type: application/json
-content-length: 35
-apigw-requestid: Za2sziyeIE0EJtw=
-```
 ---
-```
-aws lambda get-policy \
-  --region "$REGION" \
-  --function-name "LexReservationFulfillment"
-```
+
+## 참고 문서
+
+| 문서 | 내용 |
+|---|---|
+| [`docs/lex-design.md`](docs/lex-design.md) | 인텐트·슬롯 설계표, 콘솔 체크리스트 |
+| [`docs/utterances-100.md`](docs/utterances-100.md) | Intent별 샘플 발화 100개 |
+| [`docs/azure-design.md`](docs/azure-design.md) | Azure CLU 인텐트·엔티티 설계표 |
+| [`infra/README.md`](infra/README.md) | 인프라 자동 생성 매뉴얼 |
+| [`lex-chat-ux/README.md`](lex-chat-ux/README.md) | 프론트엔드·API 서버 상세 가이드 |
+| [`azure/README.md`](azure/README.md) | Azure CLU 상세 설정 가이드 |
+| [`ollama/README.md`](ollama/README.md) | Ollama 온프렘 상세 가이드 |
+
 ---
-```
-root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# aws lambda get-policy \
-  --region "$REGION" \
-  --function-name "LexReservationFulfillment"
-{
-    "Policy": "{\"Version\":\"2012-10-17\",\"Id\":\"default\",\"Statement\":[{\"Sid\":\"LexInvokePermission-38N5QKAZMD-F0AD9LP8EP\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lexv2.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:lex:ap-northeast-2:086015456585:bot-alias/38N5QKAZMD/F0AD9LP8EP\"}}},{\"Sid\":\"LexInvokePermission-38N5QKAZMD-7LRGRB54T9\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lexv2.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:lex:ap-northeast-2:086015456585:bot-alias/38N5QKAZMD/7LRGRB54T9\"}}},{\"Sid\":\"apigw-invoke\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"apigateway.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:ap-northeast-2:086015456585:function:LexReservationFulfillment\",\"Condition\":{\"ArnLike\":{\"AWS:SourceArn\":\"arn:aws:execute-api:ap-northeast-2:086015456585:n67z2umjee/*/*/*\"}}}]}",
-    "RevisionId": "b517484d-48df-4689-8135-8afe5e96eed0"
-}
 
+## 운영 유의사항
 
-```
-root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -i "https://${API_ID}.execute-api.${REGION}.amazonaws.com/health"
-HTTP/2 200 
-date: Fri, 27 Feb 2026 02:51:09 GMT
-content-type: application/json
-content-length: 49
-apigw-requestid: Za34jiC9oE0EMsg=
-
-
-```
-# health
-aws apigatewayv2 create-route \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --route-key "GET /health" \
-  --target "integrations/m256q0e"
-
-# 지점 목록
-aws apigatewayv2 create-route \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --route-key "GET /branches" \
-  --target "integrations/m256q0e"
-
-# 강좌 목록
-aws apigatewayv2 create-route \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --route-key "GET /courses" \
-  --target "integrations/m256q0e"
-
-# 예약 API
-aws apigatewayv2 create-route \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --route-key "POST /reservation" \
-  --target "integrations/m256q0e"
-
-# 루트 확인용
-aws apigatewayv2 create-route \
-  --region "$REGION" \
-  --api-id "$API_ID" \
-  --route-key "GET /" \
-  --target "integrations/m256q0e"
-
-
-
-### 일괄생성 예시
-```
-apigwinstall.sh 실행
-```
-![API GW 일괄 생성](./docs/assets/apigwinstall.png)
+- Lambda Fulfillment는 데모 목적으로 세션 속성에 예약 정보를 저장합니다. 운영 환경에서는 DynamoDB/RDS로 대체하세요.
+- Alias 기반(`DEV`/`PROD`) 배포 전략을 사용하면 무중단으로 버전 전환이 가능합니다.
+- 로케일 기본값은 `ko_KR`이며, 다국어 확장 시 로케일별 모델 분리를 권장합니다.
+- Lambda·Express 로그는 CloudWatch에서 함께 추적하세요.
