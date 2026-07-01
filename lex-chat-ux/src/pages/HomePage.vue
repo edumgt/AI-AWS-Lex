@@ -10,6 +10,7 @@
         </div>
         <nav class="nav-links">
           <a v-for="item in navItems" :key="item" href="#" class="nav-link">{{ item }}</a>
+          <router-link to="/turing" class="nav-link">튜링 테스트</router-link>
         </nav>
         <div class="nav-right">
           <q-btn
