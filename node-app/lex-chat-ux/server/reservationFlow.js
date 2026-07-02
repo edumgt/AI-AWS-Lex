@@ -1,31 +1,31 @@
 const SLOT_LABELS = {
   Branch: "지점",
-  CourseName: "과정",
+  ProductType: "상품",
   Date: "날짜",
   Time: "시간",
-  StudentName: "이름",
+  CustomerName: "고객명",
   PhoneNumber: "연락처"
 };
 
 const SLOT_PROMPTS = {
-  Branch: "어느 지점으로 예약할까요? (예: 강남점)",
-  CourseName: "어떤 과정을 원하세요? (예: 토익)",
-  Date: "원하시는 날짜를 알려주세요. (예: 2026-04-10)",
-  Time: "원하시는 시간을 알려주세요. (예: 19:30)",
-  StudentName: "예약자 성함을 알려주세요. (예: 홍길동)",
+  Branch: "어느 지점에서 상담받고 싶으세요? (예: 여의도지점)",
+  ProductType: "어떤 상품에 관심 있으세요? (예: ETF)",
+  Date: "희망하시는 상담 날짜를 알려주세요. (예: 2026-07-15)",
+  Time: "희망하시는 시간을 알려주세요. (예: 19:30)",
+  CustomerName: "예약자 성함을 알려주세요. (예: 김도영)",
   PhoneNumber: "연락처를 알려주세요. (예: 010-1234-5678)"
 };
 
 const SLOT_PLACEHOLDERS = {
-  Branch: "지점을 입력하세요 (예: 강남점)",
-  CourseName: "과정을 입력하세요 (예: 토익)",
-  Date: "날짜를 입력하세요 (예: 2026-04-10)",
+  Branch: "지점을 입력하세요 (예: 여의도지점)",
+  ProductType: "상품을 입력하세요 (예: ETF)",
+  Date: "날짜를 입력하세요 (예: 2026-07-15)",
   Time: "시간을 입력하세요 (예: 19:30)",
-  StudentName: "이름을 입력하세요 (예: 홍길동)",
+  CustomerName: "이름을 입력하세요 (예: 김도영)",
   PhoneNumber: "연락처를 입력하세요 (예: 010-1234-5678)"
 };
 
-const SLOT_ORDER = ["Branch", "CourseName", "Date", "Time", "StudentName", "PhoneNumber"];
+const SLOT_ORDER = ["Branch", "ProductType", "Date", "Time", "CustomerName", "PhoneNumber"];
 const SESSIONS = new Map();
 const SESSION_TTL_MS = 1000 * 60 * 30;
 
@@ -153,19 +153,19 @@ function extractChoice(text, choices) {
 function extractSlotValue(slot, text, catalogs) {
   if (!text) return null;
   if (slot === "Branch") return extractChoice(text, catalogs.branches);
-  if (slot === "CourseName") return extractChoice(text, catalogs.courses);
+  if (slot === "ProductType") return extractChoice(text, catalogs.products);
   if (slot === "Date") return cleanDate(text);
   if (slot === "Time") return cleanTime(text);
   if (slot === "PhoneNumber") return cleanPhone(text);
-  if (slot === "StudentName") return cleanName(text);
+  if (slot === "CustomerName") return cleanName(text);
   return null;
 }
 
 function extractAll(text, catalogs, options = {}) {
-  const includeStudentName = options.includeStudentName === true;
+  const includeCustomerName = options.includeCustomerName === true;
   const slots = {};
   for (const slot of SLOT_ORDER) {
-    if (slot === "StudentName" && !includeStudentName) continue;
+    if (slot === "CustomerName" && !includeCustomerName) continue;
     const value = extractSlotValue(slot, text, catalogs);
     if (value) slots[slot] = value;
   }
@@ -174,13 +174,13 @@ function extractAll(text, catalogs, options = {}) {
 
 function isReservationIntent(text) {
   const normalized = normalizeWhitespace(text);
-  return /(예약|수강신청|상담신청|등록)/.test(normalized);
+  return /(예약|상담신청|상담\s*예약|등록)/.test(normalized);
 }
 
 function hasReservationSignals(detected) {
   return Boolean(
     detected.Branch ||
-    detected.CourseName ||
+    detected.ProductType ||
     detected.Date ||
     detected.Time ||
     detected.PhoneNumber
@@ -190,7 +190,7 @@ function hasReservationSignals(detected) {
 function makePromptResponse({ sessionId, slots, slot, suggestions }) {
   return {
     sessionId,
-    intent: "MakeReservation",
+    intent: "BookConsultation",
     state: "InProgress",
     ui: {
       mode: "elicit_slot",
@@ -211,25 +211,23 @@ function makePromptResponse({ sessionId, slots, slot, suggestions }) {
   };
 }
 
-function makeCloseResponse({ sessionId, slots, reservationId }) {
+function makeCloseResponse({ sessionId, slots, consultationId }) {
+  const message = `투자상담 예약이 완료되었습니다.\n예약번호: ${consultationId}\n지점: ${slots.Branch} / 상품: ${slots.ProductType} / 일시: ${slots.Date} ${slots.Time}\n담당 PB가 방문 전날 ${slots.PhoneNumber}으로 사전 연락드립니다.`;
   return {
     sessionId,
-    intent: "MakeReservation",
+    intent: "BookConsultation",
     state: "Fulfilled",
     ui: {
       mode: "close",
-      prompt: `예약이 완료됐어요. 예약번호는 ${reservationId} 입니다.`
+      prompt: message
     },
-    messages: [
-      `예약이 완료됐어요. 예약번호는 ${reservationId} 입니다.`,
-      `${slots.Branch} ${slots.CourseName} / ${slots.Date} ${slots.Time} / ${slots.StudentName} / ${slots.PhoneNumber}`
-    ],
+    messages: [message],
     slots: buildSlots(slots),
     summary: buildSummary(slots),
     raw: {
       source: "reservation-flow",
       sessionId,
-      reservationId,
+      consultationId,
       slots
     }
   };
@@ -237,12 +235,12 @@ function makeCloseResponse({ sessionId, slots, reservationId }) {
 
 async function runReservationFlow({ text, sessionId, getSuggestions }) {
   const branches = await getSuggestions("Branch");
-  const courses = await getSuggestions("CourseName");
-  const catalogs = { branches, courses };
+  const products = await getSuggestions("ProductType");
+  const catalogs = { branches, products };
   const existing = getSession(sessionId);
   const expectedSlot = existing ? getNextMissingSlot(existing.slots || {}) : null;
   const detected = extractAll(text, catalogs, {
-    includeStudentName: expectedSlot === "StudentName"
+    includeCustomerName: expectedSlot === "CustomerName"
   });
 
   if (!existing && !isReservationIntent(text) && !hasReservationSignals(detected)) {
@@ -257,16 +255,16 @@ async function runReservationFlow({ text, sessionId, getSuggestions }) {
   const nextSlot = getNextMissingSlot(slots);
 
   if (!nextSlot) {
-    const reservationId = `R-${Date.now().toString(36).toUpperCase()}`;
+    const consultationId = `C-${Date.now().toString(36).toUpperCase()}`;
     clearSession(sessionId);
-    return makeCloseResponse({ sessionId, slots, reservationId });
+    return makeCloseResponse({ sessionId, slots, consultationId });
   }
 
   saveSession(sessionId, { slots });
 
   const suggestions =
     nextSlot === "Branch" ? branches :
-    nextSlot === "CourseName" ? courses :
+    nextSlot === "ProductType" ? products :
     [];
 
   return makePromptResponse({

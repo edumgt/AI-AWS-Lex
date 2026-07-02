@@ -56,7 +56,7 @@ const path = require('path');
     // Type a message in chatbot
     console.log('Typing message in chatbot...');
     const input = await page.locator('input[placeholder*="메시지"]').first();
-    await input.fill('강남점 토익 예약하고 싶어요');
+    await input.fill('여의도지점 ETF 상담 예약하고 싶어요');
     await page.waitForTimeout(500);
     
     // Screenshot 4: Chatbot with input

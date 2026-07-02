@@ -14,8 +14,8 @@ KF증권 홈페이지와 AI 투자상담 챗봇을 통합한 메인 실행 패�
 ### 홈페이지 메인 화면
 ![Homepage](screenshots/homepage.png)
 
-### 챗봇 버튼이 있는 홈페이지
-![Homepage with Chatbot](screenshots/homepage-with-chatbot.png)
+### AI 투자상담 챗봇
+![Chatbot with input](screenshots/chatbot-with-input.png)
 
 ## Docker 실행
 

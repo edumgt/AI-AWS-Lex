@@ -1,7 +1,7 @@
-# Ollama 온프렘 LLM 챗봇 실습 패키지 (학원 예약/상담 도메인)
+# Ollama 온프렘 LLM 챗봇 실습 패키지 (금융투자/증권사 투자상담 도메인)
 
 **Ollama**를 온프렘(On-Premises) 환경에서 실행해 AWS Lex V2 / Azure CLU 없이도  
-동일한 학원 예약/상담 도메인 챗봇을 구현합니다.
+동일한 금융투자/증권사 투자상담 도메인 챗봇을 구현합니다.
 
 ---
 
@@ -177,19 +177,19 @@ curl -s http://localhost:3200/health | jq .
 # 첫 번째 메시지
 curl -s http://localhost:3200/chat \
   -H 'Content-Type: application/json' \
-  -d '{"text":"강남점 토익 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
+  -d '{"text":"여의도지점 ETF 상담 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
 
 # 두 번째 메시지 (대화 이력 유지)
 curl -s http://localhost:3200/chat \
   -H 'Content-Type: application/json' \
-  -d '{"text":"2026-05-15 오후 7시로 해주세요","sessionId":"demo-user-001"}' | jq .
+  -d '{"text":"2026-07-15 오후 7시로 해주세요","sessionId":"demo-user-001"}' | jq .
 ```
 
 응답 예시:
 
 ```json
 {
-  "messages": ["안녕하세요! 예약 도와드릴게요. 성함과 연락처를 알려주세요."],
+  "messages": ["안녕하세요! 투자상담 예약 도와드릴게요. 성함과 연락처를 알려주세요."],
   "sessionId": "demo-user-001",
   "model": "exaone3.5",
   "historyLength": 4
@@ -207,10 +207,10 @@ curl -s -X DELETE http://localhost:3200/session/demo-user-001 | jq .
 ## 5) 시스템 프롬프트 커스터마이징
 
 `ollama/server/ollamaClient.js` 의 `SYSTEM_PROMPT` 상수를 수정하면  
-봇의 역할, 지점 목록, 과정 목록, 응답 스타일을 조정할 수 있습니다.
+봇의 역할, 지점 목록, 상품 목록, 응답 스타일을 조정할 수 있습니다.
 
 ```js
-const SYSTEM_PROMPT = `당신은 어학원 예약/상담 전문 AI 어시스턴트입니다.
+const SYSTEM_PROMPT = `당신은 증권사 투자상담 전문 AI 어시스턴트입니다.
 ...
 `;
 ```

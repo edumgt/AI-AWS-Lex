@@ -1,7 +1,7 @@
-# Rasa ML NLU 챗봇 실습 패키지 (학원 예약/상담 도메인)
+# Rasa ML NLU 챗봇 실습 패키지 (금융투자/증권사 투자상담 도메인)
 
 **Rasa Open Source**를 사용해 ML 기반 NLU와 대화 관리를 구현합니다.  
-학원 예약/상담 도메인을 한국어 학습 데이터로 훈련시킵니다.
+금융투자/증권사 투자상담 도메인을 한국어 학습 데이터로 훈련시킵니다.
 
 ---
 
@@ -157,13 +157,13 @@ node index.js
 # 예약 시작
 curl -s http://localhost:3300/chat \
   -H 'Content-Type: application/json' \
-  -d '{"text":"강남점 토익 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
+  -d '{"text":"여의도지점 ETF 상담 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
 ```
 
 응답 예시:
 ```json
 {
-  "messages": ["어느 지점을 원하시나요?\n• 강남점  • 홍대점  • 잠실점  • 분당점  • 인천점"],
+  "messages": ["희망하시는 상담 날짜를 알려주세요. (예: 2026-07-15)"],
   "sessionId": "demo-user-001",
   "platform": "rasa",
   "raw": [{ "recipient_id": "demo-user-001", "text": "..." }]
@@ -191,7 +191,7 @@ pipeline:
     min_ngram: 1
     max_ngram: 4
   - DIETClassifier            # Dual Intent and Entity Transformer
-  - EntitySynonymMapper       # 엔티티 동의어 처리 (강남 → 강남점)
+  - EntitySynonymMapper       # 엔티티 동의어 처리 (강남 → 강남WM센터)
   - FallbackClassifier        # 낮은 신뢰도 발화 폴백 처리
 ```
 

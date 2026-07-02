@@ -268,7 +268,7 @@ def _close_response(session_id: str, intent: str, state: str, message: str, slot
 
 
 def _is_reservation_intent(text: str) -> bool:
-    return bool(re.search(r"(예약|상담신청|수강신청|등록)", text))
+    return bool(re.search(r"(예약|상담신청|상담\s*요청|등록)", text))
 
 
 def _has_reservation_signals(detected: dict) -> bool:

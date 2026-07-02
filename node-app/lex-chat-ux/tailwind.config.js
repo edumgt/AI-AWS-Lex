@@ -26,7 +26,7 @@ module.exports = {
         ]
       },
       colors: {
-        academy: {
+        brand: {
           primary: '#3b82f6',
           secondary: '#8b5cf6',
           accent: '#06b6d4',

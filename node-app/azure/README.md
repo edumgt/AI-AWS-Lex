@@ -1,6 +1,6 @@
-# MS Azure 기반 챗봇 실습 패키지 (학원 예약/상담 도메인)
+# MS Azure 기반 챗봇 실습 패키지 (금융투자/증권사 투자상담 도메인)
 
-AWS Lex V2 실습과 동일한 **학원 예약/상담 도메인**을 Microsoft Azure 서비스로 구현합니다.
+AWS Lex V2 실습과 동일한 **금융투자/증권사 투자상담 도메인**을 Microsoft Azure 서비스로 구현합니다.
 
 ---
 
@@ -89,9 +89,9 @@ https://language.cognitive.azure.com
 
 ```
 [프로젝트 만들기] → [대화형 언어 이해] 선택
-  - 프로젝트 이름: AcademyBot
+  - 프로젝트 이름: FinanceInvestBot
   - 언어: Korean (ko)
-  - 설명: 학원 예약/상담 챗봇
+  - 설명: 증권사 투자상담 챗봇
 ```
 
 ### 2-3. 인텐트 추가
@@ -100,10 +100,10 @@ https://language.cognitive.azure.com
 
 | 인텐트 | 목적 |
 |---|---|
-| MakeReservation | 수강 예약 생성 |
-| CheckReservation | 예약 조회 |
-| CancelReservation | 예약 취소 |
-| CourseInfo | 과정/수업 정보 문의 |
+| BookConsultation | 투자상담 예약 생성 |
+| CheckConsultation | 예약 조회 |
+| CancelConsultation | 예약 취소 |
+| ProductInfo | 금융상품 정보 문의 |
 | Help | 도움말/기능 안내 |
 | None | 미인식 발화 (기본) |
 
@@ -113,13 +113,13 @@ AWS Lex의 Slot에 해당합니다.
 
 | 엔티티 | 타입 | 예시 값 |
 |---|---|---|
-| Branch | List | 강남점, 홍대점, 잠실점, 분당점, 인천점 |
-| CourseName | List | 토익, 오픽, 영어회화, 일본어, 자격증 |
-| Date | Prebuilt (DateTime) | 2026-05-10, 다음 주 월요일 |
-| Time | Prebuilt (DateTime) | 19:00, 오후 7시 |
-| StudentName | Prebuilt (PersonName) | 김도영 |
+| Branch | List | 여의도지점, 종로지점, 압구정PB센터, 강남WM센터, 판교지점 |
+| ProductType | List | 국내주식, 해외주식, ETF, ELS, 채권, 펀드, ISA, 연금저축 |
+| Date | Prebuilt (DateTime) | 2026-07-15, 다음 주 월요일 |
+| Time | Prebuilt (DateTime) | 19:30, 오후 7시 |
+| CustomerName | Prebuilt (PersonName) | 김도영 |
 | PhoneNumber | Regex | `\d{3}-\d{3,4}-\d{4}` |
-| ReservationId | Regex | `R-[A-Z0-9]+` |
+| ConsultationId | Regex | `C-[A-Z0-9]+` |
 
 ### 2-5. 학습 데이터(Utterance) 추가
 
@@ -140,7 +140,7 @@ AWS Lex의 Slot에 해당합니다.
 ```bash
 export AZURE_LANGUAGE_ENDPOINT="https://<your-resource>.cognitiveservices.azure.com"
 export AZURE_LANGUAGE_KEY="<Key1-or-Key2>"
-export AZURE_CLU_PROJECT="AcademyBot"
+export AZURE_CLU_PROJECT="FinanceInvestBot"
 export AZURE_CLU_DEPLOYMENT="production"
 ```
 
@@ -170,21 +170,21 @@ node index.js
 ```bash
 curl -s http://localhost:3100/chat \
   -H 'Content-Type: application/json' \
-  -d '{"text":"강남점 토익 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
+  -d '{"text":"여의도지점 ETF 상담 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
 ```
 
 응답 예시:
 
 ```json
 {
-  "intent": "MakeReservation",
+  "intent": "BookConsultation",
   "score": 0.97,
   "entities": [
-    { "name": "Branch",     "value": "강남점", "score": 0.99 },
-    { "name": "CourseName", "value": "토익",   "score": 0.98 }
+    { "name": "Branch",      "value": "여의도지점", "score": 0.99 },
+    { "name": "ProductType", "value": "ETF",       "score": 0.98 }
   ],
-  "messages": ["예약 날짜를 알려주세요. (예: 2026-05-10)"],
-  "sessionState": { "intent": "MakeReservation", "pendingBranch": "강남점", "pendingCourse": "토익" }
+  "messages": ["희망하시는 상담 날짜를 알려주세요. (예: 2026-07-15)"],
+  "sessionState": { "intent": "BookConsultation", "pendingBranch": "여의도지점", "pendingProductType": "ETF" }
 }
 ```
 

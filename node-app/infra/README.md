@@ -1,5 +1,10 @@
 # Lex 자동 생성(Infra) 사용법
 
+이 스크립트로 생성한 Lex 봇은 아래와 같은 AWS 런타임 구조로 서비스됩니다
+(SAM으로 배포되는 `chatbot-api` 스택 기준):
+
+![AWS 런타임 인프라](../docs/assets/aws-infra.png)
+
 이 폴더에는 **Lex V2 봇을 자동 생성**하는 스크립트가 2가지 들어있습니다.
 
 - `lex-bootstrap.sh` : AWS CLI 기반 bash 스크립트
@@ -278,23 +283,33 @@ aws --region ap-northeast-2 lexv2-models describe-bot-alias \
   --query botAliasStatus --output text
 ```
 
-# 테스트:
+### 테스트
 
 ```bash
 curl -s http://localhost:3000/api/chat \
   -H 'Content-Type: application/json' \
-  -d '{"text":"강남점 토익 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
+  -d '{"text":"여의도지점 ETF 상담 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
 ```
 
----
-```
-root@DESKTOP-OJOTK17:/home/AI-AWS-Lex# curl -s http://localhost:3000/api/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"text":"강남점 토익 예약하고 싶어요","sessionId":"demo-user-001"}' | jq .
+응답 예시:
+
+```json
 {
-  "error": "Lambda 호출 실패: {\"errorType\":\"TypeError\",\"errorMessage\":\"Cannot read properties of undefined (reading 'intent')\",\"trace\":[\"TypeError: Cannot read properties of undefined (reading 'intent')\",\"    at close (/var/task/index.js:23:31)\",\"    at exports.handler (/var/task/index.js:123:10)\",\"    at Runtime.handleOnceNonStreaming (file:///var/runtime/index.mjs:1306:29)\"]}",
-  "hint": "AWS_REGION / LEX_BOT_ID / LEX_BOT_ALIAS_ID / (옵션) LEX_LOCALE_ID 환경변수와 AWS 자격증명 설정을 확인하세요."
+  "sessionId": "demo-user-001",
+  "engine": "aws-lex",
+  "intent": "BookConsultation",
+  "state": "InProgress",
+  "ui": {
+    "mode": "elicit_slot",
+    "slotToElicit": "Date",
+    "prompt": "희망하시는 상담 날짜를 알려주세요. (예: 2026-07-15)"
+  },
+  "messages": ["희망하시는 상담 날짜를 알려주세요. (예: 2026-07-15)"]
+}
 ```
+
+> `Lambda 호출 실패` 에러가 발생하면 `AWS_REGION` / `LEX_BOT_ID` / `LEX_BOT_ALIAS_ID` /
+> (옵션) `LEX_LOCALE_ID` 환경변수와 AWS 자격증명 설정을 확인하세요.
 
 ---
 ### 람다 업데이트

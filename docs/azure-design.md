@@ -1,4 +1,4 @@
-# Azure CLU 설계표 (학원 예약/상담 도메인)
+# Azure CLU 설계표 (금융투자/증권사 투자상담 도메인)
 
 AWS Lex V2의 `docs/lex-design.md` 와 동일한 비즈니스 도메인을  
 Azure Conversational Language Understanding(CLU) 기준으로 설계합니다.
@@ -9,10 +9,10 @@ Azure Conversational Language Understanding(CLU) 기준으로 설계합니다.
 
 | Intent | 목적 | Fulfillment | 필수 엔티티 |
 |---|---|---|---|
-| MakeReservation | 수강 예약 생성 | Azure Functions (fulfillment.js) | Branch, CourseName, Date, Time, StudentName, PhoneNumber |
-| CheckReservation | 예약 조회 | Azure Functions (fulfillment.js) | ReservationId |
-| CancelReservation | 예약 취소 | Azure Functions (fulfillment.js) | ReservationId |
-| CourseInfo | 과정/수업 정보 문의 | Azure Functions (fulfillment.js) | CourseName (선택) |
+| BookConsultation | 투자상담 예약 생성 | Azure Functions (fulfillment.js) | Branch, ProductType, Date, Time, CustomerName, PhoneNumber |
+| CheckConsultation | 예약 조회 | Azure Functions (fulfillment.js) | ConsultationId |
+| CancelConsultation | 예약 취소 | Azure Functions (fulfillment.js) | ConsultationId |
+| ProductInfo | 금융상품 정보 문의 | Azure Functions (fulfillment.js) | ProductType (선택) |
 | Help | 기능 안내/도움말 | Azure Functions (fulfillment.js) | - |
 | None | 미인식 발화 처리 | CLU 기본 | - |
 
@@ -23,22 +23,22 @@ Azure Conversational Language Understanding(CLU) 기준으로 설계합니다.
 AWS Lex의 Slot에 해당합니다.  
 CLU는 Prebuilt / List / Regex / Learned 4가지 타입을 지원합니다.
 
-### MakeReservation 엔티티
+### BookConsultation 엔티티
 
 | 엔티티 | CLU 타입 | 예시 | 필수 | 비고 |
 |---|---|---|---|---|
-| Branch | List | 강남점, 홍대점, 잠실점, 분당점, 인천점 | Y | synonyms 포함 |
-| CourseName | List | 토익, 오픽, 영어회화, 일본어, 자격증 | Y | synonyms 포함 |
-| Date | Prebuilt (DateTime) | 2026-05-10, 다음 주 월요일 | Y | - |
-| Time | Prebuilt (DateTime) | 19:00, 오후 7시 | Y | - |
-| StudentName | Prebuilt (PersonName) | 김도영 | Y | - |
+| Branch | List | 여의도지점, 종로지점, 압구정PB센터, 강남WM센터, 판교지점 | Y | synonyms 포함 |
+| ProductType | List | 국내주식, 해외주식, ETF, ELS, 채권, 펀드, ISA, 연금저축 | Y | synonyms 포함 |
+| Date | Prebuilt (DateTime) | 2026-07-15, 다음 주 월요일 | Y | - |
+| Time | Prebuilt (DateTime) | 19:30, 오후 7시 | Y | - |
+| CustomerName | Prebuilt (PersonName) | 김도영 | Y | - |
 | PhoneNumber | Regex | `\d{3}-\d{3,4}-\d{4}` | Y | 정규식 검증 |
 
-### CheckReservation / CancelReservation 엔티티
+### CheckConsultation / CancelConsultation 엔티티
 
 | 엔티티 | CLU 타입 | 예시 | 필수 |
 |---|---|---|---|
-| ReservationId | Regex | `R-[A-Z0-9]+` | N (세션 대체 가능) |
+| ConsultationId | Regex | `C-[A-Z0-9]+` | N (세션 대체 가능) |
 
 ---
 
@@ -48,21 +48,24 @@ CLU는 Prebuilt / List / Regex / Learned 4가지 타입을 지원합니다.
 
 | 정규값 | 동의어(Synonyms) |
 |---|---|
-| 강남점 | 강남, 강남역, 강남지점 |
-| 홍대점 | 홍대, 홍익대, 홍대입구 |
-| 잠실점 | 잠실, 잠실역, 잠실지점 |
-| 분당점 | 분당, 성남, 판교 |
-| 인천점 | 인천, 인천지점 |
+| 여의도지점 | 여의도, 여의도역, 여의도 본점 |
+| 종로지점 | 종로, 종로구, 종로역 |
+| 압구정PB센터 | 압구정, 압구정역, 압구정 PB |
+| 강남WM센터 | 강남, 강남역, 강남 WM |
+| 판교지점 | 판교, 판교역, 판교 테크 |
 
-### CourseName
+### ProductType
 
 | 정규값 | 동의어(Synonyms) |
 |---|---|
-| 토익 | TOEIC, toeic, 토익반 |
-| 오픽 | OPIc, opic, 오픽반 |
-| 영어회화 | 회화, 영어, 영어수업, 영어클래스 |
-| 일본어 | 일본어 수업, 일어 |
-| 자격증 | 자격증반, 자격시험 |
+| 국내주식 | 국내 주식, 주식, 코스피, 코스닥 |
+| 해외주식 | 해외 주식, 미국주식, 미장 |
+| ETF | 이티에프, 상장지수펀드 |
+| ELS | 주가연계증권, 이엘에스 |
+| 채권 | 국채, 회사채, 채권형 |
+| 펀드 | 공모펀드, 펀드상품 |
+| ISA | 아이사, 개인종합자산관리계좌 |
+| 연금저축 | 연금, 연금저축펀드 |
 
 ---
 
@@ -100,26 +103,26 @@ CLU는 Prebuilt / List / Regex / Learned 4가지 타입을 지원합니다.
 `docs/utterances-100.md` 의 발화를 그대로 CLU에 활용할 수 있습니다.  
 아래는 인텐트별 대표 발화 예시입니다.
 
-### MakeReservation
-- "강남점 토익 예약하고 싶어요"
-- "홍대점에서 오픽 수업 신청하려고요"
-- "5월 10일 오후 7시 영어회화 예약 부탁드려요"
-- "잠실점 자격증 과정 등록하고 싶습니다"
+### BookConsultation
+- "여의도지점 ETF 상담 예약하고 싶어요"
+- "강남WM센터에서 국내주식 상담 신청하려고요"
+- "7월 15일 오후 7시 30분 연금저축 상담 예약 부탁드려요"
+- "판교지점 해외주식 상담 등록하고 싶습니다"
 
-### CheckReservation
-- "제 예약 확인해 주세요"
-- "R-ABC123 예약 상태 알고 싶어요"
+### CheckConsultation
+- "제 상담 예약 확인해 주세요"
+- "C-ABCD12 예약 상태 알고 싶어요"
 - "예약한 날짜가 언제였나요?"
 
-### CancelReservation
-- "예약 취소하고 싶어요"
-- "R-ABC123 취소해 주세요"
+### CancelConsultation
+- "상담 예약 취소하고 싶어요"
+- "C-ABCD12 취소해 주세요"
 - "다음 주 예약 없애 주세요"
 
-### CourseInfo
-- "토익 과정 어떻게 되나요?"
-- "오픽 수업 방식이 궁금해요"
-- "일본어 수업 주 몇 회인가요?"
+### ProductInfo
+- "ETF가 뭐예요?"
+- "ISA 계좌 혜택이 궁금해요"
+- "연금저축 세액공제는 얼마나 되나요?"
 
 ### Help
 - "뭘 할 수 있나요?"
