@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KF증권 - 스마트한 투자의 시작</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="kf-page">
+
+  <!-- ═══ NAV ═══ -->
+  <header class="kf-nav">
+    <div class="nav-inner">
+      <div class="nav-brand"><span class="material-icons">show_chart</span><span>KF증권</span></div>
+      <nav class="nav-links">
+        <a href="#" class="nav-link">주식</a>
+        <a href="#" class="nav-link">펀드</a>
+        <a href="#" class="nav-link">ETF</a>
+        <a href="#" class="nav-link">채권·RP</a>
+        <a href="#" class="nav-link">해외투자</a>
+        <a href="#" class="nav-link">퇴직연금</a>
+        <a href="#" class="nav-link">고객센터</a>
+        <a href="/turing.html" class="nav-link">튜링 테스트</a>
+      </nav>
+      <div class="nav-right">
+        <button class="open-btn">계좌개설</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ TICKER ═══ -->
+  <div class="ticker-wrap">
+    <div class="ticker-inner" id="tickerInner"></div>
+  </div>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero-section">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge">🏆 2024 한국투자자보호 우수증권사</div>
+        <h1 class="hero-title">스마트한 투자의 시작<br><em>KF증권</em>과 함께하세요</h1>
+        <p class="hero-sub">전문 투자상담부터 ISA·ETF·해외주식까지<br>AI 챗봇으로 언제든 편리하게 상담받으세요</p>
+        <div class="hero-btns">
+          <button class="btn-cta" data-open-chat>💬 AI 투자상담 시작</button>
+          <button class="btn-outline">상품 둘러보기</button>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="panel-title">오늘의 주요 지수</div>
+        <div class="panel-row"><span class="pi-name">KOSPI</span><span class="pi-val">2,847.52</span><span class="pi-chg up">+0.44%</span></div>
+        <div class="panel-row"><span class="pi-name">KOSDAQ</span><span class="pi-val">854.21</span><span class="pi-chg up">+0.69%</span></div>
+        <div class="panel-row"><span class="pi-name">S&amp;P500</span><span class="pi-val">5,523.11</span><span class="pi-chg dn">-0.33%</span></div>
+        <div class="panel-row"><span class="pi-name">원/달러</span><span class="pi-val">1,382.50</span><span class="pi-chg up">+0.30%</span></div>
+        <div class="panel-footer" id="todayStr"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ QUICK MENU ═══ -->
+  <section class="quick-section">
+    <div class="section-wrap">
+      <div class="quick-grid">
+        <button class="quick-btn"><div class="quick-icon" style="background:#e8f4fd"><span class="material-icons" style="color:#1652f0">trending_up</span></div><span class="quick-label">주식</span></button>
+        <button class="quick-btn"><div class="quick-icon" style="background:#fef3e2"><span class="material-icons" style="color:#f59e0b">pie_chart</span></div><span class="quick-label">펀드</span></button>
+        <button class="quick-btn"><div class="quick-icon" style="background:#edfaf4"><span class="material-icons" style="color:#0ecb81">bar_chart</span></div><span class="quick-label">ETF</span></button>
+        <button class="quick-btn"><div class="quick-icon" style="background:#f3e8ff"><span class="material-icons" style="color:#8b5cf6">language</span></div><span class="quick-label">해외주식</span></button>
+        <button class="quick-btn"><div class="quick-icon" style="background:#fce8e8"><span class="material-icons" style="color:#f6465d">savings</span></div><span class="quick-label">ISA</span></button>
+        <button class="quick-btn"><div class="quick-icon" style="background:#e8f4fd"><span class="material-icons" style="color:#0284c7">elderly</span></div><span class="quick-label">퇴직연금</span></button>
+        <button class="quick-btn"><div class="quick-icon" style="background:#fef9e8"><span class="material-icons" style="color:#d97706">account_balance</span></div><span class="quick-label">채권</span></button>
+        <button class="quick-btn"><div class="quick-icon" style="background:#e8fdf6"><span class="material-icons" style="color:#059669">school</span></div><span class="quick-label">투자교육</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PRODUCTS ═══ -->
+  <section class="products-section">
+    <div class="section-wrap">
+      <div class="s-header"><h2>추천 금융상품</h2><p>KF증권 대표 투자 솔루션을 만나보세요</p></div>
+      <div class="product-grid">
+        <div class="product-card" data-open-chat>
+          <div class="p-icon-wrap" style="background:#fce8e8"><span class="material-icons" style="color:#f6465d;font-size:28px">savings</span></div>
+          <div class="p-name">ISA 계좌</div>
+          <div class="p-desc">비과세·세금우대 혜택으로 세금 절약하며 투자</div>
+          <div class="p-badge" style="color:#f6465d;background:#fce8e8">연 200만원 비과세</div>
+          <div class="p-cta">AI 상담받기 →</div>
+        </div>
+        <div class="product-card" data-open-chat>
+          <div class="p-icon-wrap" style="background:#edfaf4"><span class="material-icons" style="color:#0ecb81;font-size:28px">bar_chart</span></div>
+          <div class="p-name">ETF 투자</div>
+          <div class="p-desc">국내·해외 ETF를 한 번에, 낮은 수수료로 분산투자</div>
+          <div class="p-badge" style="color:#0ecb81;background:#edfaf4">수수료 0.015%~</div>
+          <div class="p-cta">AI 상담받기 →</div>
+        </div>
+        <div class="product-card" data-open-chat>
+          <div class="p-icon-wrap" style="background:#e8f4fd"><span class="material-icons" style="color:#1652f0;font-size:28px">elderly</span></div>
+          <div class="p-name">IRP·퇴직연금</div>
+          <div class="p-desc">세액공제 최대 900만원, 노후를 위한 스마트 연금</div>
+          <div class="p-badge" style="color:#1652f0;background:#e8f4fd">세액공제 16.5%</div>
+          <div class="p-cta">AI 상담받기 →</div>
+        </div>
+        <div class="product-card" data-open-chat>
+          <div class="p-icon-wrap" style="background:#f3e8ff"><span class="material-icons" style="color:#8b5cf6;font-size:28px">language</span></div>
+          <div class="p-name">해외주식</div>
+          <div class="p-desc">미국·중국·일본 주요 종목에 실시간 직접 투자</div>
+          <div class="p-badge" style="color:#8b5cf6;background:#f3e8ff">실시간 환전</div>
+          <div class="p-cta">AI 상담받기 →</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MARKET ═══ -->
+  <section class="market-section">
+    <div class="section-wrap">
+      <div class="s-header"><h2>시장 현황</h2><span class="date-tag" id="marketDateTag"></span></div>
+      <div class="market-grid">
+        <div class="market-card"><div class="m-name">KOSPI</div><div class="m-val">2,847.52</div><div class="m-chg up">▲ 12.43<span class="m-pct">(+0.44%)</span></div><div class="m-bar-bg"><div class="m-bar" style="width:62%;background:#0ecb81"></div></div></div>
+        <div class="market-card"><div class="m-name">KOSDAQ</div><div class="m-val">854.21</div><div class="m-chg up">▲ 5.87<span class="m-pct">(+0.69%)</span></div><div class="m-bar-bg"><div class="m-bar" style="width:55%;background:#0ecb81"></div></div></div>
+        <div class="market-card"><div class="m-name">KOSPI200</div><div class="m-val">381.04</div><div class="m-chg up">▲ 1.92<span class="m-pct">(+0.51%)</span></div><div class="m-bar-bg"><div class="m-bar" style="width:48%;background:#0ecb81"></div></div></div>
+        <div class="market-card"><div class="m-name">KRX300</div><div class="m-val">449.28</div><div class="m-chg up">▲ 3.41<span class="m-pct">(+0.77%)</span></div><div class="m-bar-bg"><div class="m-bar" style="width:70%;background:#0ecb81"></div></div></div>
+        <div class="market-card"><div class="m-name">S&amp;P500</div><div class="m-val">5,523.11</div><div class="m-chg dn">▼ 18.32<span class="m-pct">(-0.33%)</span></div><div class="m-bar-bg"><div class="m-bar" style="width:40%;background:#f6465d"></div></div></div>
+        <div class="market-card"><div class="m-name">NASDAQ</div><div class="m-val">17,948</div><div class="m-chg dn">▼ 89.54<span class="m-pct">(-0.50%)</span></div><div class="m-bar-bg"><div class="m-bar" style="width:35%;background:#f6465d"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ NEWS + NOTICE ═══ -->
+  <section class="news-section">
+    <div class="section-wrap news-wrap">
+      <div class="news-col">
+        <div class="s-header"><h2>투자 뉴스</h2></div>
+        <div class="news-list">
+          <div class="news-item"><span class="n-tag" style="background:#e8f4fd;color:#1652f0">국내</span><span class="n-title">한국은행, 기준금리 3.00% 동결…증시 반응은?</span><span class="n-time">14:23</span></div>
+          <div class="news-item"><span class="n-tag" style="background:#f3e8ff;color:#8b5cf6">해외</span><span class="n-title">Fed 7월 회의록 공개, 금리 인하 신호 포착</span><span class="n-time">13:47</span></div>
+          <div class="news-item"><span class="n-tag" style="background:#edfaf4;color:#059669">ETF</span><span class="n-title">TIGER 미국나스닥100 ETF, 신규 투자자 급증</span><span class="n-time">12:05</span></div>
+          <div class="news-item"><span class="n-tag" style="background:#fef3e2;color:#d97706">실적</span><span class="n-title">삼성전자 2Q 실적 예상치 상회…반도체 회복 기대</span><span class="n-time">10:38</span></div>
+          <div class="news-item"><span class="n-tag" style="background:#fce8e8;color:#f6465d">공모주</span><span class="n-title">하반기 대형 IPO 일정 발표, 청약 경쟁률 주목</span><span class="n-time">09:21</span></div>
+        </div>
+      </div>
+      <div class="notice-col">
+        <div class="s-header"><h2>공지사항</h2></div>
+        <div class="notice-list">
+          <div class="notice-item"><span class="material-icons">chevron_right</span>[공지] 7월 금융투자교육 온라인 강좌 개설</div>
+          <div class="notice-item"><span class="material-icons">chevron_right</span>[안내] 해외주식 양도소득세 신고 기간 안내</div>
+          <div class="notice-item"><span class="material-icons">chevron_right</span>[이벤트] 여름 특별 ETF 수수료 무료 이벤트</div>
+          <div class="notice-item"><span class="material-icons">chevron_right</span>[시스템] 08.03(토) 야간 서비스 점검 안내</div>
+        </div>
+        <div class="event-box" data-open-chat>
+          <div class="event-icon">🎁</div>
+          <div><div class="event-title">신규 계좌개설 이벤트</div><div class="event-desc">ETF 매수수수료 3개월 무료!</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="kf-footer">
+    <div class="footer-wrap">
+      <div class="footer-brand"><span class="material-icons" style="font-size:18px">show_chart</span>KF증권(주)</div>
+      <div class="footer-info">서울특별시 영등포구 여의대로 36 KF타워&nbsp;|&nbsp;대표이사: 홍길동&nbsp;|&nbsp;사업자번호: 123-45-67890<br>고객센터: 1588-0000 (평일 09:00~18:00)&nbsp;|&nbsp;금융투자업 제2018-서울-0001호</div>
+      <div class="footer-legal">※ 금융투자상품은 예금자보호법에 따른 예금보험 대상이 아닙니다. 투자 결과는 투자자 본인의 판단과 책임 하에 이루어집니다.</div>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ═══ CHATBOT ═══ -->
+<button id="chatFab" class="chatbot-fab"><span class="material-icons">chat</span><div class="pulse-ring"></div></button>
+<div id="chatBackdrop" class="cp-backdrop"></div>
+<div id="chatPopup" class="chat-popup">
+  <div class="cp-header">
+    <div class="cp-header-left">
+      <div class="cp-avatar"><span class="material-icons">smart_toy</span></div>
+      <div>
+        <div class="cp-title">KF증권 AI 상담</div>
+        <div class="cp-subtitle"><span class="cp-dot"></span>온라인</div>
+      </div>
+    </div>
+    <div class="cp-header-right">
+      <button id="cpReset" class="cp-icon-btn" title="새 대화"><span class="material-icons" style="font-size:18px">refresh</span></button>
+      <button id="cpClose" class="cp-icon-btn cp-close" title="닫기"><span class="material-icons" style="font-size:18px">close</span></button>
+    </div>
+  </div>
+
+  <div id="cpSummary" class="cp-summary" style="display:none">
+    <div class="cp-summary-title">예약 정보</div>
+    <div id="cpChips" class="cp-chips"></div>
+  </div>
+
+  <div id="cpMessages" class="cp-messages"><div id="cpMsgList" class="cp-msg-list"></div></div>
+
+  <div id="cpQuick" class="cp-quick" style="display:none"></div>
+
+  <div class="cp-input-area">
+    <div id="cpInputBar" class="cp-input-bar">
+      <input id="cpInput" class="cp-input" placeholder="메시지를 입력하세요..." />
+      <button id="cpSend" class="cp-send"><span class="material-icons" style="font-size:18px">arrow_upward</span></button>
+    </div>
+    <div class="cp-footer-text">KF증권 AI · 투자 결과는 고객 본인의 책임</div>
+  </div>
+</div>
+
+<script>
+  const TICKERS = [
+    { name: 'KOSPI', val: '2,847.52', chg: '12.43', up: true },
+    { name: 'KOSDAQ', val: '854.21', chg: '5.87', up: true },
+    { name: 'S&P500', val: '5,523.11', chg: '18.32', up: false },
+    { name: 'DOW', val: '43,861', chg: '134.4', up: false },
+    { name: 'NASDAQ', val: '17,948', chg: '89.5', up: false },
+    { name: '원/달러', val: '1,382.50', chg: '4.20', up: true },
+    { name: 'WTI', val: '78.42', chg: '0.83', up: true },
+    { name: '금(oz)', val: '2,318.60', chg: '11.20', up: false },
+  ];
+  const tickerHtml = [...TICKERS, ...TICKERS]
+    .map((t) => `<span class="ticker-item ${t.up ? 'up' : 'dn'}"><span class="t-name">${t.name}</span><span class="t-val">${t.val}</span><span class="t-chg">${t.up ? '▲' : '▼'}${t.chg}</span></span>`)
+    .join('');
+  document.getElementById('tickerInner').innerHTML = tickerHtml;
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+  document.getElementById('todayStr').textContent = `${todayStr} 장마감 기준`;
+  document.getElementById('marketDateTag').textContent = `${todayStr} 장마감`;
+</script>
+<script src="/js/api.js"></script>
+<script src="/js/branchMap.js"></script>
+<script src="/js/chat.js"></script>
+<script src="/js/home.js"></script>
+</body>
+</html>

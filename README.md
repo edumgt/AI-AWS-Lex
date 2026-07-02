@@ -135,14 +135,14 @@
 
 ```mermaid
 flowchart TD
-    A[고객\n웹 브라우저] -->|Cognito 로그인| B[Amazon Cognito\nUser Pool]
+    A[고객<br/>웹 브라우저] -->|Cognito 로그인| B[Amazon Cognito<br/>User Pool]
     B -->|JWT 토큰 발급| A
-    A -->|POST /api/chat\n+ Bearer JWT| C[Express API 서버\nlex-chat-ux/server]
+    A -->|"POST /api/chat<br/>+ Bearer JWT"| C[Express API 서버<br/>lex-chat-ux/server]
     C --> D{AI 엔진 선택}
-    D -->|aws-lex| E[Amazon Lex V2\nRecognizeText]
-    D -->|azure-clu| F[Azure CLU\nanalyzeConversation]
+    D -->|aws-lex| E[Amazon Lex V2<br/>RecognizeText]
+    D -->|azure-clu| F[Azure CLU<br/>analyzeConversation]
     D -->|ollama| G[Ollama 로컬 LLM]
-    E -->|Fulfillment| H[AWS Lambda\nfulfillment.js]
+    E -->|Fulfillment| H[AWS Lambda<br/>fulfillment.js]
     H --> I[응답 반환]
     E --> I
     F --> I
@@ -154,10 +154,10 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    Client -->|HTTPS| APIGW[API Gateway\nHTTP API]
-    APIGW -->|JWT 검증| Cognito[Cognito\nUser Pool]
-    APIGW -->|인증 통과| Lambda[Lambda\nfulfillment.js]
-    Lambda <-->|RecognizeText| Lex[Amazon Lex V2\nko_KR]
+    Client -->|HTTPS| APIGW[API Gateway<br/>HTTP API]
+    APIGW -->|JWT 검증| Cognito[Cognito<br/>User Pool]
+    APIGW -->|인증 통과| Lambda[Lambda<br/>fulfillment.js]
+    Lambda <-->|RecognizeText| Lex[Amazon Lex V2<br/>ko_KR]
 ```
 
 ---
